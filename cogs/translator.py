@@ -22,8 +22,12 @@ class Translate(commands.Cog):
         else:
             f_confidence = f'{r}%'
         
-        await ctx.display(embed = discord.Embed(title=f"\"{text}\"",
+        await ctx.display(embed = discord.Embed(title="Translated something !",
                                                 color=self.mio.color
+                                                ).add_field(
+                                                    name='Original',
+                                                    value=text,
+                                                    inline=False
                                                 ).add_field(
                                                     name='Translation',
                                                     value=resp.text,
