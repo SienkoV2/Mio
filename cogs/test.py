@@ -8,8 +8,15 @@ class Test(commands.Cog):
         
     @commands.command()
     async def test(self, ctx, n : int):
-        pag = ShortPaginator(ctx, embeds=[discord.Embed(title='Hello') for _ in range(n)])
-        await pag.run_until_complete()
+        appinfo = await ctx.bot.application_info()
+
+        embed = discord.Embed(title='Hello', color=ctx.bot.color)
+
+        for attr_name in dir(appinfo):
+            attr = getattr(appinfo, attr_name)
+            print(attr)
+
+        return await ctx.send(embed=embed)
 
 
 

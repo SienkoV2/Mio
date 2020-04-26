@@ -26,19 +26,9 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-
-from discord import Activity, ActivityType
-from discord.ext.commands import when_mentioned_or
-
-from config import DISCORD_TOKEN, PREFIX
+from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
 from core import MioBot
 
-params = {
-    'command_prefix' : when_mentioned_or(PREFIX),
-    'activity' : Activity(name='Fuwa Fuwa Time', 
-                          type=ActivityType.listening)
-}
-
 if __name__ == '__main__':
-    MioBot(**params).run(DISCORD_TOKEN)
+    MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
     

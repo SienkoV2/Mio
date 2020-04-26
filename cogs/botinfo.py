@@ -21,6 +21,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+from typing import Iterator
 
 import discord
 from discord.ext import commands
@@ -37,6 +38,33 @@ class MioInfo(commands.Cog):
         """Show Mio's source code"""
         self.embed.color = self.mio.color
         await ctx.display(embed=self.embed)
+    
+    @commands.command(name='stats')
+    async def stats(self, ctx):
+        """Shows some stats about the bot"""
+        guilds, channels, members = [n async for n in self._get_numbers()]
+        embed = discord.Embed(title='Stats', color=self.mio.color)
+
+        fields = [('Guilds', f'{guilds} guilds'), 
+                  ('Channels', f'{channels} channels'), 
+                  ('Members', f'{members} members')]
+        
+        for name, value in fields:
+            embed.add_field(name=name, value=value)
+        
+        await ctx.display(embed=embed)    
+    
+    async def _get_numbers(self) -> Iterator[int]:
+        """Async iterators good"""
+        mio = self.mio
+        for container in (mio.guilds, mio.get_all_channels(), mio.get_all_members()):
+            yield sum(1 for _ in container)
+        
+        
+        
+
+                    
+                    
                     
     async def _fetch_github_embed(self):
         link = 'https://github.com/Saphielle-Akiyama/Mio'

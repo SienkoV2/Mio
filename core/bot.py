@@ -29,26 +29,29 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 from os import environ
 from sys import stderr
 from pathlib import Path
+from asyncio import sleep
 from random import random, uniform
 from traceback import print_exception, format_exception
 
 from discord import Embed, Color
-from discord.ext.commands import AutoShardedBot, CommandNotFound
+from discord.ext.commands import AutoShardedBot, CommandNotFound, CooldownMapping, BucketType
 
 from core.ctx import MioCtx
+from config import GLOBAL_USER_COOLDOWN
 
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.users_on_cd = set()
         self.load_all_extensions()
         self.setup_jishaku()
         
+    # bootup
     def setup_jishaku(self):
         for env in ('JISHAKU_NO_UNDERSCORE', 'JISHAKU_NO_UNDERSCORE'):
             environ[env] = 'true'
         self.load_extension('jishaku')
         
-    # bootup
     def load_all_extensions(self):
         for file in Path('cogs').glob('**/*.py'):
             *tree, _ = file.parts
@@ -61,10 +64,31 @@ class MioBot(AutoShardedBot):
                                 file=stderr)
                 
     # overriding some defaults
+ 
+    async def process_commands(self, msg): 
+        author = msg.author     
+        if author.bot:
+            return
+        if author.id in self.users_on_cd:
+            return self.loop.create_task(msg.add_reaction('⏰'))
+        ctx = await self.get_context(msg)
+        await self.invoke(ctx)
+        if not ctx.command_failed and ctx.command:
+            self.users_on_cd.add(author.id)
+            self.loop.create_task(self.remove_cd(author.id))
+            
+    async def remove_cd(self, user_id : int):
+        await sleep(GLOBAL_USER_COOLDOWN)
+        self.users_on_cd.remove(user_id)
+    
+    
+    
     async def get_context(self, message, *, cls = MioCtx):
+        """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
     
     async def on_command_error(self, ctx, exception):
+        """Overrides the default error handler"""
         error = getattr(exception, "original", exception)
         if isinstance(error, CommandNotFound):
             return
@@ -76,7 +100,7 @@ class MioBot(AutoShardedBot):
         if (is_owner := await self.is_owner(ctx.author)):
             verbosity += 7
             
-        lines = '\n'.join(format_exception(*e_args, 4))
+        lines = ''.join(format_exception(*e_args, 4))
         
         await ctx.display(embed=Embed(title=f'Error : {type(exception).__name__}',
                                       color=self.color,
