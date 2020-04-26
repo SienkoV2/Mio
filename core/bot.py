@@ -73,8 +73,10 @@ class MioBot(AutoShardedBot):
             return
         
         if author.id in self.users_on_cd:
-            self.user_got_reaction.add(author.id)
-            return self.loop.create_task(msg.add_reaction('⏰'))
+            if author.id not in self.user_got_reaction:
+                self.user_got_reaction.add(author.id)
+                self.loop.create_task(msg.add_reaction('⏰'))
+            return
         
         ctx = await self.get_context(msg)
         await self.invoke(ctx)
