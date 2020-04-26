@@ -1,3 +1,31 @@
+"""
+MIT License
+
+Copyright (c) 2020 Saphielle Akiyama
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+__title__ = 'Mio'
+__author__ = 'Saphielle-Akiyama'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2020 Saphielle-Akiyama'
+
 from re import findall
 from typing import Union
 
@@ -34,6 +62,29 @@ class Paginator(MioDisplay):
     @button(emoji='⏭', position=5)
     async def on_full_forward(self, payload):
         await self.goto_index('last')
+        
+# Shortpaginator (2 - 5) pages
+class ShortPaginator(MioDisplay):
+    def __init__(self, ctx, **options):
+        super().__init__(ctx, **options)
+        self.buttons = ('⏹️', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣')
+            
+    async def run_until_complete(self):
+        await self.start()
+        for emoji, _ in zip(self.buttons, range(self._max_index + 2)):
+            await self.msg.add_reaction(emoji)
+            
+        while not self._is_closed:
+            payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
+            if (emoji := getattr(payload, 'emoji', None)):
+                if str(emoji) == '⏹️':
+                    await self.stop()
+                else:
+                    await self.goto_index(self.buttons.index(str(emoji)) - 1)
+            else:
+                self._is_closed = True
+                
+        await self.after()
         
 # Prompt - 1 page 
 class Prompt(MioDisplay):
@@ -72,8 +123,13 @@ async def autodetect(ctx, **options) -> Union[Prompt, Paginator]:
         
     contents, embeds = contents_embeds
         
-    if max(len(contents), len(embeds)) <= 1:
+    max_len = max(len(contents), len(embeds))
+    
+    if max_len <= 1:
         return Prompt(ctx, contents=contents, embeds=embeds, **options)
+    
+    elif max_len <= 5:
+        return ShortPaginator(ctx, contents=contents, embeds=embeds, **options)
     
     else:
         return Paginator(ctx, contents=contents, embeds=embeds, **options)    

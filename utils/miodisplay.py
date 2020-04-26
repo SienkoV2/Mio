@@ -1,3 +1,31 @@
+"""
+MIT License
+
+Copyright (c) 2020 Saphielle Akiyama
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+__title__ = 'Mio'
+__author__ = 'Saphielle-Akiyama'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2020 Saphielle-Akiyama'
+
 from re import findall
 from asyncio import FIRST_COMPLETED
 from asyncio import wait as async_wait
@@ -32,19 +60,19 @@ class MioDisplay:
             raise TypeError(f"Improper args :\n {f_options}")
 
         # do not touch 
-        self.__index = options.pop('index', 0)
-        self.__max_index = max(len(self.contents)-1, len(self.embeds)-1)    
-        self.__unable_to_delete = False
-        self.__is_closed = False
-        self.__raw_buttons = {
+        self._index = options.pop('index', 0)
+        self._max_index = max(len(self.contents)-1, len(self.embeds)-1)    
+        self._unable_to_delete = False
+        self._is_closed = False
+        self._raw_buttons = {
             k : v for k, v in filter(None, map(lambda n: getattr(getattr(self, n), '_button', None), dir(self)))
         }   
 
     async def start(self):
-        """Only sends the initial message"""          
-        self.__index, self.__max_index, to_send = await self.__move_page(self.__index)
+        """Only sends the initial message and adds reactions"""          
+        self._index, self._max_index, to_send = await self.__move_page(self._index)
         self.msg = await self._channel.send(**to_send)
-        self.__buttons = await self.__add_reactions(self.__raw_buttons)
+        self._buttons = await self.__add_reactions(self._raw_buttons)
 
     async def run_until_complete(self) -> True:
         """Keeps cycling until a stop order is given
@@ -54,7 +82,7 @@ class MioDisplay:
         """        
         await self.start()
 
-        while not self.__is_closed:
+        while not self._is_closed:
             payload = await self.cycle()
 
         await self.after()
@@ -66,13 +94,13 @@ class MioDisplay:
         Returns:
             RawReactionEvent -- The received payload, or None if the wait_for timed out
         """        
-        payload, self.__unable_to_delete = await self.__wait_for_reaction(self.__unable_to_delete)
+        payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
         return await self.__dispatch(payload)
        
     # Control the session as a whole
     async def stop(self):
         """Stops cycling, changes the state of is_closed"""           
-        self.__is_closed = True
+        self._is_closed = True
 
     async def after(self):
         """To override, automatically called when it stops"""
@@ -91,32 +119,16 @@ class MioDisplay:
             for reaction in msg.reactions:
                 if reaction.me:
                     await reaction.remove(self.mio.user)
-
-    # get input from users (meant to be used by subclasses)
-    async def wait_for_reaction(self):
-        """
-        Waits for a valid button to be pressed, calls the stop function in
-        case of timeout
-        """
-        return await self.__wait_for_reaction(self.__unable_to_delete)
-
-    async def wait_for_message(self):
-        """
-        Waits for a message containing a number
-        calls the stop function in case of timeout
-        """
-        
-        return await self.__wait_for_message()
         
     # Control displayed pages
     async def page_up(self, amount : int = 1):
         """Moves goes up a certain amount of pages"""
-        self.__index, self.__max_index, to_send = await self.__move_page(self.__index + amount)
+        self._index, self._max_index, to_send = await self.__move_page(self._index + amount)
         await self.msg.edit(**to_send)        
 
     async def page_down(self, amount : int = 1):
         """Moves down a certain amount of pages"""
-        self.__index, self.__max_index, to_send = await self.__move_page(self.__index 
+        self._index, self._max_index, to_send = await self.__move_page(self._index 
                                                                        - amount)
         await self.msg.edit(**to_send)
 
@@ -126,20 +138,20 @@ class MioDisplay:
             new_index = 0
         
         elif position == 'last':
-            new_index = self.__max_index
+            new_index = self._max_index
 
         else:
             new_index = position
 
-        self.__index, self.__max_index, to_send = await self.__move_page(new_index)
+        self._index, self._max_index, to_send = await self.__move_page(new_index)
         await self.msg.edit(**to_send)
     # lvl 3
     async def __move_page(self, new_amount : int) -> Tuple[int, int, Dict]:
-        self.__index = await self.__check_page_index(new_amount)
+        self._index = await self.__check_page_index(new_amount)
 
-        max_index, to_send = await self.__formatter(self.__index)
+        max_index, to_send = await self.__formatter(self._index)
 
-        return self.__index, max_index, to_send
+        return self._index, max_index, to_send
 
     # lvl 2  
     async def __formatter(self, index) -> Tuple[int, Dict]:
@@ -151,7 +163,7 @@ class MioDisplay:
         max_index = max(len(self.contents)-1, len(self.embeds)-1) 
 
         curr_embed = await self.__format_embed(curr_embed, 
-                                               self.__index, 
+                                               self._index, 
                                                max_index)
 
         return max_index, {'content' : curr_content, 'embed' : curr_embed}
@@ -164,7 +176,7 @@ class MioDisplay:
         """
         buttons = {}
 
-        for _, (emoji, func) in sorted(self.__raw_buttons.items()):
+        for _, (emoji, func) in sorted(self._raw_buttons.items()):
             try:
                 emoji_obj = await EmojiConverter().convert(self.ctx, emoji)
 
@@ -177,7 +189,7 @@ class MioDisplay:
 
         return buttons
 
-    async def __wait_for_reaction(self, 
+    async def wait_for_reaction(self, 
                                   unable_to_delete : bool
                                   ) -> Tuple[Union[RawReactionActionEvent, None], bool]:
         """
@@ -222,7 +234,7 @@ class MioDisplay:
                         ) -> RawReactionActionEvent:
         """Tries to find the proper emoji"""
         try:
-            await self.__buttons[str(payload.emoji)](self, payload)
+            await self._buttons[str(payload.emoji)](self, payload)
 
         except KeyError:
             pass
@@ -230,7 +242,7 @@ class MioDisplay:
         finally:
             return payload
         
-    async def __wait_for_message(self) -> int:
+    async def wait_for_message(self) -> int:
         def check(m : Message):
             return (m.channel == self.msg.channel
                     and (m.author == self.ctx.author 
@@ -253,8 +265,8 @@ class MioDisplay:
     # lvl 1      
     async def __check_page_index(self, index : int):
         """Checks if the index is a proper one"""
-        if index > self.__max_index:                        
-            return self.__max_index   
+        if index > self._max_index:                        
+            return self._max_index   
         
         elif index < 0:
             return 0

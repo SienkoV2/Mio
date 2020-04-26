@@ -1,13 +1,40 @@
-import discord
-from discord.ext import commands
+"""
+MIT License
+
+Copyright (c) 2020 Saphielle Akiyama
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+"""
+__title__ = 'Mio'
+__author__ = 'Saphielle-Akiyama'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2020 Saphielle-Akiyama'
+
+from discord import Message
+from discord.ext.commands import Cog
 
 import async_cleverbot as ac
-from aiogoogletrans import Translator
 
 from config import TRAVITIA_TOKEN
 
 
-class Cleverbot(commands.Cog):
+class Cleverbot(Cog):
     def __init__(self, mio):
         self.mio = mio
         
@@ -15,8 +42,8 @@ class Cleverbot(commands.Cog):
         self.cb_client.set_context(ac.DictContext(self.cb_client))
         
     
-    @commands.Cog.listener()
-    async def on_message(self, msg : discord.Message):
+    @Cog.listener()
+    async def on_message(self, msg : Message):        
         ctx = await self.mio.get_context(msg)
         if (msg.author.bot or ctx.command
             or not (self.mio.user.mentioned_in(msg) or msg.guild is None)):
