@@ -22,11 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
 from typing import Iterator
+from asyncio import sleep
 
 import discord
 from discord.ext import commands
 
 from config import BOOTUP_CHANNEL
+
 
 class MioInfo(commands.Cog):
     def __init__(self, mio):
@@ -67,9 +69,11 @@ class MioInfo(commands.Cog):
                     
                     
     async def _fetch_github_embed(self):
+        """For some reasons, it gets autoformatted when refetching it"""
         link = 'https://github.com/Saphielle-Akiyama/Mio'
         await self.mio.wait_until_ready()
         msg = await self.mio.get_channel(BOOTUP_CHANNEL).send(link)
+        await sleep(5)
         msg_w_embed = await msg.channel.fetch_message(msg.id)
         await msg.delete()
         self.embed = msg_w_embed.embeds[0]
