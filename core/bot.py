@@ -36,7 +36,8 @@ from traceback import print_exception, format_exception
 from discord import Embed, Color
 from discord.ext.commands import (AutoShardedBot, CommandNotFound, 
                                   CooldownMapping, BucketType, 
-                                  UserInputError, CheckFailure)
+                                  UserInputError, CheckFailure,
+                                  CommandError)
 
 from core.ctx import MioCtx
 from config import GLOBAL_USER_COOLDOWN
@@ -44,8 +45,8 @@ from config import GLOBAL_USER_COOLDOWN
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.users_on_cd = set()
-        self.user_got_reaction = set()
+        self._cd = CooldownMapping.from_cooldown(1.0, 5.0, BucketType.user)
+        self._clocks = set()
         self.load_all_extensions()
         self.setup_jishaku()
         
@@ -60,32 +61,37 @@ class MioBot(AutoShardedBot):
             *tree, _ = file.parts
             try:
                 self.load_extension(f"{'.'.join(tree)}.{file.stem}")
-            except Exception as exception:
-                print_exception(type(exception), 
-                                exception, 
-                                exception.__traceback__, 
-                                file=stderr)
+            except Exception as err:
+                eargs = (type(err), err, err.__traceback__)
+                print_exception(*eargs, file=stderr)
                 
     # overriding some defaults
-    async def process_commands(self, msg): 
-        ctx = await self.get_context(msg)
-        author = msg.author     
-        if author.bot:
-            return
+    async def invoke(self, ctx):
+        if ctx.command is not None:
+            self.dispatch('command', ctx)
+            try:
+                if await self.can_run(ctx, call_once=True):
+                    bucket = self._cd.get_bucket(ctx.message)
+                    retry_after = bucket.update_rate_limit()
+                    if retry_after: 
+                        return await self.dispatch_clock(ctx)
+                    self._clocks.discard(ctx.author.id)
+                    await ctx.command.invoke(ctx)
+                    
+            except CommandError as exc:
+                bucket.reset()
+                self._clocks.discard(ctx.author.id)
+                await ctx.command.dispatch_error(ctx, exc)
+            else:
+                self.dispatch('command_completion', ctx)
+    
+    async def dispatch_clock(self, ctx):
+        id_ = ctx.author.id
+        if id_ not in self._clocks:
+            await ctx.add_reaction('⏰')
+            self._clocks.add(id_)        
         
-        if author.id in self.users_on_cd:
-            return
-        
-        await self.invoke(ctx)
-        
-        if not ctx.command_failed and ctx.command:
-            self.users_on_cd.add(author.id)
-            self.loop.create_task(self.remove_cd(author.id))
-            
-    async def remove_cd(self, user_id : int):
-        await sleep(GLOBAL_USER_COOLDOWN)
-        for container in (self.users_on_cd, self.user_got_reaction):
-            container.discard(user_id)
+    
         
     async def get_context(self, message, *, cls = MioCtx):
         """Overrides the default Ctx"""
