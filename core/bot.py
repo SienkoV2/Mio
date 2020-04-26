@@ -57,13 +57,7 @@ class MioBot(AutoShardedBot):
     @property
     def color(self):
         return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
-    
-    
-    
-    
-    
-    
-    
+        
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)

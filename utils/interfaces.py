@@ -10,8 +10,10 @@ class Paginator(MioDisplay):
     """Used to show multiple pages"""
     @button(emoji='🔢', position=0)
     async def on_input_emoji(self, payload):
+        msg = await self._channel.send('Which page do you want to see ?')
         new_index = await self.wait_for_message()
         await self.goto_index(new_index - 1)
+        await msg.delete()
             
     @button(emoji='⏮', position=1)
     async def on_full_back(self, payload):
