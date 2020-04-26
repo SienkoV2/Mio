@@ -51,9 +51,11 @@ class Cleverbot(Cog):
         
         self.mio.loop.create_task(ctx.trigger_typing())
               
+        emotion = ac.Emotion.angry if msg.mention_everyone else ac.Emotion.happy
+              
         cb_ans = await self.cb_client.ask(msg.content, 
                                           id_=msg.author.id, 
-                                          emotion=ac.Emotion.happy)
+                                          emotion=emotion)
         
         f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild is not None else cb_ans.text
         
