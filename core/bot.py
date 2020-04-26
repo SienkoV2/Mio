@@ -85,9 +85,9 @@ class MioBot(AutoShardedBot):
             
     async def remove_cd(self, user_id : int):
         await sleep(GLOBAL_USER_COOLDOWN)
-        self.users_on_cd.discard(user_id)
-        self.user_got_reaction.discard(user_id)
-    
+        for container in (self.users_on_cd, self.user_got_reaction):
+            container.discard(user_id)
+        
     async def get_context(self, message, *, cls = MioCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
@@ -112,6 +112,7 @@ class MioBot(AutoShardedBot):
         await ctx.display(embed=Embed(title=f'Error : {type(exception).__name__}',
                                       color=self.color,
                                       description=f"```py\n{lines}```"))
+        
     @property
     def color(self):
         return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
