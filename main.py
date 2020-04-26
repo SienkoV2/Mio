@@ -30,11 +30,11 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 from discord import Activity, ActivityType
 from discord.ext.commands import when_mentioned_or
 
-from config import DISCORD_TOKEN
+from config import DISCORD_TOKEN, PREFIX
 from core import MioBot
 
 params = {
-    'command_prefix' : when_mentioned_or('yui '),
+    'command_prefix' : when_mentioned_or(PREFIX),
     'activity' : Activity(name='Fuwa Fuwa Time', 
                           type=ActivityType.listening)
 }
