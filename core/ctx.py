@@ -30,7 +30,9 @@ from re import findall
 from typing import Union, Iterable
 
 from discord import Embed
-from discord.ext.commands import EmojiConverter, PartialEmojiConverter, BadArgument, Context
+from discord.ext.commands import (EmojiConverter, PartialEmojiConverter, 
+                                  BadArgument, Context)
+
 from utils.interfaces import autodetect
 
 class MioCtx(Context):
