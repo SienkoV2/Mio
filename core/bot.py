@@ -34,7 +34,9 @@ from random import random, uniform
 from traceback import print_exception, format_exception
 
 from discord import Embed, Color
-from discord.ext.commands import AutoShardedBot, CommandNotFound, CooldownMapping, BucketType
+from discord.ext.commands import (AutoShardedBot, CommandNotFound, 
+                                  CooldownMapping, BucketType, 
+                                  UserInputError, CheckFailure)
 
 from core.ctx import MioCtx
 from config import GLOBAL_USER_COOLDOWN
@@ -64,15 +66,17 @@ class MioBot(AutoShardedBot):
                                 file=stderr)
                 
     # overriding some defaults
- 
     async def process_commands(self, msg): 
         author = msg.author     
         if author.bot:
             return
+        
         if author.id in self.users_on_cd:
             return self.loop.create_task(msg.add_reaction('⏰'))
+        
         ctx = await self.get_context(msg)
         await self.invoke(ctx)
+        
         if not ctx.command_failed and ctx.command:
             self.users_on_cd.add(author.id)
             self.loop.create_task(self.remove_cd(author.id))
@@ -80,7 +84,6 @@ class MioBot(AutoShardedBot):
     async def remove_cd(self, user_id : int):
         await sleep(GLOBAL_USER_COOLDOWN)
         self.users_on_cd.remove(user_id)
-    
     
     
     async def get_context(self, message, *, cls = MioCtx):
@@ -94,7 +97,9 @@ class MioBot(AutoShardedBot):
             return
         
         e_args = (type(exception), exception, exception.__traceback__)
-        print_exception(*e_args, file=stderr)
+        
+        if not isinstance(error, (UserInputError, CheckFailure)):
+            print_exception(*e_args, file=stderr)
         
         verbosity = 1
         if (is_owner := await self.is_owner(ctx.author)):
