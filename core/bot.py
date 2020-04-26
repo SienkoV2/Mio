@@ -68,17 +68,17 @@ class MioBot(AutoShardedBot):
                 
     # overriding some defaults
     async def process_commands(self, msg): 
+        ctx = await self.get_context(msg)
         author = msg.author     
         if author.bot:
             return
         
         if author.id in self.users_on_cd:
-            if author.id not in self.user_got_reaction:
+            if author.id not in self.user_got_reaction and ctx.command:
                 self.user_got_reaction.add(author.id)
                 self.loop.create_task(msg.add_reaction('⏰'))
             return
         
-        ctx = await self.get_context(msg)
         await self.invoke(ctx)
         
         if not ctx.command_failed and ctx.command:
