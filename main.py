@@ -34,7 +34,7 @@ from config import DISCORD_TOKEN
 from core import MioBot
 
 params = {
-    'command_prefix' : when_mentioned_or('mio '),
+    'command_prefix' : when_mentioned_or('yui '),
     'activity' : Activity(name='Fuwa Fuwa Time', 
                           type=ActivityType.listening)
 }

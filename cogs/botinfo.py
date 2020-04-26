@@ -50,7 +50,7 @@ class MioInfo(commands.Cog):
         await msg.delete()
         self.embed = msg_w_embed.embeds[0]
         
-        
+        import jishaku
         
 def setup(mio):
     mio.add_cog(MioInfo(mio))
