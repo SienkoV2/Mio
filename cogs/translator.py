@@ -46,7 +46,7 @@ class Translate(commands.Cog):
     async def translate_from(self, ctx, *, text):
         """Translates a text to english"""        
         resp = await self.translator.translate(text)
-        await self.__display(ctx, resp, text)
+        await self._display(ctx, resp, text)
 
     @translate.command(name='to')
     async def translate_to(self, ctx, language : to_lower, *, text):
@@ -60,9 +60,9 @@ class Translate(commands.Cog):
         
         resp = await self.translator.translate(text, dest=lang)
         
-        await self.__display(ctx, resp, text)
+        await self._display(ctx, resp, text)
         
-    async def __display(self, ctx, resp, text) -> None:
+    async def _display(self, ctx, resp, text) -> None:
         """Displays the response 
 
         Arguments:

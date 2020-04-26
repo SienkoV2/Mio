@@ -32,25 +32,21 @@ class MioInfo(commands.Cog):
         self.mio = mio 
         mio.loop.create_task(self._fetch_github_embed())
     
-    
     @commands.command(name='source')
     async def source(self, ctx):
         """Show Mio's source code"""
         self.embed.color = self.mio.color
         await ctx.display(embed=self.embed)
-                       
-        
-
-    
+                    
     async def _fetch_github_embed(self):
-        link = "https://github.com/Saphielle-Akiyama/Mio"
+        link = 'https://github.com/Saphielle-Akiyama/Mio'
         await self.mio.wait_until_ready()
         msg = await self.mio.get_channel(BOOTUP_CHANNEL).send(link)
         msg_w_embed = await msg.channel.fetch_message(msg.id)
         await msg.delete()
         self.embed = msg_w_embed.embeds[0]
         
-        import jishaku
+        
         
 def setup(mio):
     mio.add_cog(MioInfo(mio))
