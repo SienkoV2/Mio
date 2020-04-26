@@ -59,8 +59,7 @@ class MioBot(AutoShardedBot):
                                 exception, 
                                 exception.__traceback__, 
                                 file=stderr)
-
-    
+                
     # overriding some defaults
     async def get_context(self, message, *, cls = MioCtx):
         return await super().get_context(message, cls=cls)
