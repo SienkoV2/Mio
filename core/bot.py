@@ -45,6 +45,7 @@ class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.users_on_cd = set()
+        self.user_got_reaction = set()
         self.load_all_extensions()
         self.setup_jishaku()
         
@@ -72,6 +73,7 @@ class MioBot(AutoShardedBot):
             return
         
         if author.id in self.users_on_cd:
+            self.user_got_reaction.add(author.id)
             return self.loop.create_task(msg.add_reaction('⏰'))
         
         ctx = await self.get_context(msg)
@@ -83,8 +85,8 @@ class MioBot(AutoShardedBot):
             
     async def remove_cd(self, user_id : int):
         await sleep(GLOBAL_USER_COOLDOWN)
-        self.users_on_cd.remove(user_id)
-    
+        self.users_on_cd.discard(user_id)
+        self.user_got_reaction.discard(user_id)
     
     async def get_context(self, message, *, cls = MioCtx):
         """Overrides the default Ctx"""
