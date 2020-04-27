@@ -50,7 +50,7 @@ class MioInfo(commands.Cog):
 
         fields = [('Guilds', f'{guilds} guilds'), 
                   ('Channels', f'{channels} channels'), 
-                  ('Members', f'{members} online members'),
+                  ('Members', f'{members} members'),
                   ('Cogs', f'{cogs} cogs'),
                   ('Groups', f'{groups} groups'),
                   ('Commands', f'{commands} commands')]
