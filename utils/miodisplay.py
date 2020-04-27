@@ -41,18 +41,19 @@ class MioDisplay:
         Base class that defines some helper functions, 
         not meant to be inherited from
         """
-        # Easily accessible
+        # Easily accessible, but shouldn't be edited
         self.ctx = ctx
-        self.mio = ctx.bot
+        self.mio = options.pop('bot', None) or ctx.bot
+        self.loop = options.pop('loop', None) or ctx.bot.loop
         
         # Editable
         self.embeds = options.pop('embeds', [])
         self.contents = options.pop('contents', [])
         
         # Shouldn't be edited, but still accessible 
-        self._channel = options.pop('channel', None) or ctx.channel
-        self._timeout = options.pop('timeout', 30)
-        self._author_only = options.pop('author_only', True)
+        self.channel = options.pop('channel', None) or ctx.channel
+        self.timeout = options.pop('timeout', 30)
+        self.author_only = options.pop('author_only', True)
 
         # checking that no options are left
         if options:
@@ -60,18 +61,18 @@ class MioDisplay:
             raise TypeError(f"Improper args :\n {f_options}")
 
         # do not touch 
-        self._index = options.pop('index', 0)
-        self._max_index = max(len(self.contents)-1, len(self.embeds)-1)    
-        self._unable_to_delete = False
-        self._is_closed = False
+        self.index = options.pop('index', 0)
+        self.max_index = max(len(self.contents)-1, len(self.embeds)-1)    
+        self.unable_to_delete = False
+        self.is_running = True
         self._raw_buttons = {
             k : v for k, v in filter(None, map(lambda n: getattr(getattr(self, n), '_button', None), dir(self)))
         }   
 
     async def start(self):
         """Only sends the initial message and adds reactions"""          
-        self._index, self._max_index, to_send = await self.__move_page(self._index)
-        self.msg = await self._channel.send(**to_send)
+        self.index, self.max_index, to_send = self.__move_page(self.index)
+        self.msg = await self.channel.send(**to_send)
         self._buttons = await self.__add_reactions(self._raw_buttons)
 
     async def run_until_complete(self) -> True:
@@ -82,8 +83,8 @@ class MioDisplay:
         """        
         await self.start()
 
-        while not self._is_closed:
-            payload = await self.cycle()
+        while self.is_running:
+            await self.cycle()
 
         await self.after()
         return True
@@ -94,14 +95,9 @@ class MioDisplay:
         Returns:
             RawReactionEvent -- The received payload, or None if the wait_for timed out
         """        
-        payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
+        payload, self.unable_to_delete = await self.wait_for_reaction(self.unable_to_delete)
         return await self.__dispatch(payload)
        
-    # Control the session as a whole
-    async def stop(self):
-        """Stops cycling, changes the state of is_closed"""           
-        self._is_closed = True
-
     async def after(self):
         """To override, automatically called when it stops"""
         await self.msg.delete()   
@@ -117,54 +113,51 @@ class MioDisplay:
         except HTTPException:
             msg = await self.msg.channel.fetch_message(self.msg.id)
             for reaction in msg.reactions:
-                if reaction.me:
-                    await reaction.remove(self.mio.user)
-        
+                if reaction.me: self.loop.create_task(reaction.remove(self.mio.user))
+            
     # Control displayed pages
     async def page_up(self, amount : int = 1):
         """Moves goes up a certain amount of pages"""
-        self._index, self._max_index, to_send = await self.__move_page(self._index + amount)
+        self.index, self.max_index, to_send = self.__move_page(self.index + amount)
         await self.msg.edit(**to_send)        
 
     async def page_down(self, amount : int = 1):
         """Moves down a certain amount of pages"""
-        self._index, self._max_index, to_send = await self.__move_page(self._index 
-                                                                       - amount)
+        self.index, self.max_index, to_send = self.__move_page(self.index - amount)
         await self.msg.edit(**to_send)
 
     async def goto_index(self, position : Union[int, str]):
         """Goes to the specified page"""
-        if position == 'first':
+        if position == 'first': 
             new_index = 0
-        
-        elif position == 'last':
-            new_index = self._max_index
-
-        else:
+        elif position == 'last': 
+            new_index = self.max_index
+        else: 
             new_index = position
-
-        self._index, self._max_index, to_send = await self.__move_page(new_index)
+        
+        self.index, self.max_index, to_send = self.__move_page(new_index)
         await self.msg.edit(**to_send)
+        
     # lvl 3
-    async def __move_page(self, new_amount : int) -> Tuple[int, int, Dict]:
-        self._index = await self.__check_page_index(new_amount)
+    def __move_page(self, new_amount : int) -> Tuple[int, int, Dict]:
+        self.index = self.__check_page_index(new_amount)
 
-        max_index, to_send = await self.__formatter(self._index)
+        max_index, to_send = self.__formatter(self.index)
 
-        return self._index, max_index, to_send
+        return self.index, max_index, to_send
 
     # lvl 2  
-    async def __formatter(self, index) -> Tuple[int, Dict]:
+    def __formatter(self, index) -> Tuple[int, Dict]:
         """Formats the embed with the current page"""
-        curr_content, curr_embed = await self.__curr_pages(self.contents, 
-                                                           self.embeds, 
-                                                           index)
+        curr_content, curr_embed = [*self.__curr_pages(self.contents, 
+                                                     self.embeds, 
+                                                     index)]
 
         max_index = max(len(self.contents)-1, len(self.embeds)-1) 
 
-        curr_embed = await self.__format_embed(curr_embed, 
-                                               self._index, 
-                                               max_index)
+        curr_embed = self.__format_embed(curr_embed, 
+                                         self.index, 
+                                         max_index)
 
         return max_index, {'content' : curr_content, 'embed' : curr_embed}
 
@@ -179,19 +172,16 @@ class MioDisplay:
         for _, (emoji, func) in sorted(self._raw_buttons.items()):
             try:
                 emoji_obj = await EmojiConverter().convert(self.ctx, emoji)
-
             except BadArgument:
                 emoji_obj = emoji
-
             finally:
-                await self.msg.add_reaction(emoji_obj)  
-                buttons = await self.__update_buttons(buttons, emoji, func)
-
+                self.mio.loop.create_task(self.msg.add_reaction(emoji_obj))  
+                buttons = self.__update_buttons(buttons, emoji, func)
         return buttons
 
     async def wait_for_reaction(self, 
-                                  unable_to_delete : bool
-                                  ) -> Tuple[Union[RawReactionActionEvent, None], bool]:
+                                unable_to_delete : bool
+                                ) -> Tuple[Union[RawReactionActionEvent, None], bool]:
         """
         Waits for a reaction add or a reaction remove depending on whether
         it could remove the reaction or not
@@ -200,16 +190,13 @@ class MioDisplay:
             return (p.message_id == self.msg.id 
                     and p.channel_id == self.msg.channel.id
                     and (p.user_id == self.ctx.author.id 
-                         or not self._author_only 
+                         or not self.author_only 
                          and p.user_id != self.bot.user.id))
         
-        to_wait_for = [self.mio.wait_for('raw_reaction_add', 
-                                         timeout=self._timeout, 
-                                         check=check)]
+        wf_kwargs = {'event' : 'raw_reaction_add', 'timeout' : self.timeout, 'check' : check}
+        to_wait_for = [self.mio.wait_for(**wf_kwargs)]
         if unable_to_delete:
-            to_wait_for.append(self.mio.wait_for('raw_reaction_remove', 
-                                                 timeout=self._timeout, 
-                                                 check=check))
+            to_wait_for.append(self.mio.wait_for(**wf_kwargs))
 
         done, pending = await async_wait(to_wait_for, return_when=FIRST_COMPLETED)
         
@@ -218,7 +205,7 @@ class MioDisplay:
 
         except AsyncTimeoutError:
             to_return = None    
-            await self.stop()
+            self.is_running = False
 
         else:
             to_return = payload
@@ -235,10 +222,8 @@ class MioDisplay:
         """Tries to find the proper emoji"""
         try:
             await self._buttons[str(payload.emoji)](self, payload)
-
         except KeyError:
             pass
-
         finally:
             return payload
         
@@ -246,64 +231,58 @@ class MioDisplay:
         def check(m : Message):
             return (m.channel == self.msg.channel
                     and (m.author == self.ctx.author 
-                         or not self._author_only 
+                         or not self.author_only 
                          and m.author != self.bot.user))
     
         while True:
             try:
-                msg = await self.mio.wait_for('message', timeout=self._timeout, check=check)
-            
+                msg = await self.mio.wait_for('message', timeout=self.timeout, check=check)
+                
             except AsyncTimeoutError:
-                await self.stop()
+                self.is_running = False
                 return None
             
             else:
                 if (new_index := findall(r"(\d+)", msg.content)):
-                    await self.__delete_user_input(msg)
+                    self.loop.create_task(self.__delete_user_input(msg))
                     return int(new_index[0])    
-
+                
     # lvl 1      
-    async def __check_page_index(self, index : int):
+    def __check_page_index(self, index : int):
         """Checks if the index is a proper one"""
-        if index > self._max_index:                        
-            return self._max_index   
-        
+        if index > self.max_index:                        
+            return self.max_index   
         elif index < 0:
             return 0
-
         else:
             return index
 
-    async def __curr_pages(self, 
-                           contents : List[str], 
-                           embeds : List[Embed], 
-                           index : int
-                          ) -> Tuple[Union[str, None], Union[Embed, None]]:
+    def __curr_pages(self, 
+                     contents : List[str], 
+                     embeds : List[Embed], 
+                     index : int
+                     ) -> Tuple[Union[str, None], Union[Embed, None]]:
         """Returns the current pages or None if they don't exist"""
-        to_return = []
         for item in (contents, embeds):
             try:
-                to_return.append(item[index])
+                yield item[index]
             except IndexError:
-                to_return.append(None)
+                yield None
 
-        return to_return
-
-    async def __format_embed(self,
-                             curr_embed : Union[Embed, None],
-                             index : int,
-                             max_index : int,
-                            ) -> Embed:
+    def __format_embed(self,
+                       curr_embed : Union[Embed, None],
+                       index : int,
+                       max_index : int
+                       ) -> Embed:
         """Sets a footer for embeds"""
         if curr_embed is None:
             return None
 
         return curr_embed.set_footer(text = f"Page {index + 1} out of {max_index + 1}")
 
-    async def __update_buttons(self, curr_buttons : dict, emoji : str, func : callable) -> dict:
+    def __update_buttons(self, curr_buttons : dict, emoji : str, func : callable) -> dict:
         if emoji in curr_buttons.keys():
             raise TypeError(f"{emoji} is already registered as a button")
-        
         else:
             curr_buttons[emoji] = func
             return curr_buttons
@@ -311,13 +290,10 @@ class MioDisplay:
     async def __remove_reaction(self, payload : RawReactionActionEvent):
         if payload.event_type  == 'REACTION_REMOVE':
             return False
-
         try:
             await self.msg.remove_reaction(payload.emoji, payload.member)
-
         except (HTTPException, AttributeError):
             return True
-
         else:
             return False
     
@@ -336,5 +312,4 @@ def button(*, emoji : str, position : int):
 class DecoratorClass:
     def __init__(self, emoji, position, func):
         self._button = (position, (emoji, func))
-
 
