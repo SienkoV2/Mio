@@ -43,7 +43,7 @@ class MioDisplay:
         """
         # Easily accessible, but shouldn't be edited
         self.ctx = ctx
-        self.mio = options.pop('bot', None) or ctx.bot
+        self.bot = options.pop('bot', None) or ctx.bot
         self.loop = options.pop('loop', None) or ctx.bot.loop
         
         # Editable
@@ -113,7 +113,7 @@ class MioDisplay:
         except HTTPException:
             msg = await self.msg.channel.fetch_message(self.msg.id)
             for reaction in msg.reactions:
-                if reaction.me: self.loop.create_task(reaction.remove(self.mio.user))
+                if reaction.me: self.loop.create_task(reaction.remove(self.bot.user))
             
     # Control displayed pages
     async def page_up(self, amount : int = 1):
@@ -175,7 +175,7 @@ class MioDisplay:
             except BadArgument:
                 emoji_obj = emoji
             finally:
-                self.mio.loop.create_task(self.msg.add_reaction(emoji_obj))  
+                self.bot.loop.create_task(self.msg.add_reaction(emoji_obj))  
                 buttons = self.__update_buttons(buttons, emoji, func)
         return buttons
 
@@ -194,9 +194,9 @@ class MioDisplay:
                          and p.user_id != self.bot.user.id))
         
         wf_kwargs = {'event' : 'raw_reaction_add', 'timeout' : self.timeout, 'check' : check}
-        to_wait_for = [self.mio.wait_for(**wf_kwargs)]
+        to_wait_for = [self.bot.wait_for(**wf_kwargs)]
         if unable_to_delete:
-            to_wait_for.append(self.mio.wait_for(**wf_kwargs))
+            to_wait_for.append(self.bot.wait_for(**wf_kwargs))
 
         done, pending = await async_wait(to_wait_for, return_when=FIRST_COMPLETED)
         
@@ -236,7 +236,7 @@ class MioDisplay:
     
         while True:
             try:
-                msg = await self.mio.wait_for('message', timeout=self.timeout, check=check)
+                msg = await self.bot.wait_for('message', timeout=self.timeout, check=check)
                 
             except AsyncTimeoutError:
                 self.is_running = False

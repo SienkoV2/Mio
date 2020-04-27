@@ -26,18 +26,21 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-import discord
-from discord.ext import commands
+from discord import Embed
+from discord.ext.commands import Cog, group,CommandError
 
 from aiogoogletrans import Translator, LANGUAGES, LANGCODES
 from utils.converters import to_lower
 
-class Translate(commands.Cog):
-    def __init__(self, mio):
-        self.mio = mio
+class TranslatorCog(Cog):
+    def __on_cog_load(self, bot):
+        self.bot = bot
         self.translator = Translator()
 
-    @commands.group(name='translate', invoke_without_command=True)
+    def __on_cog_unload(self):
+        print('unloaded')
+
+    @group(name='translate', invoke_without_command=True)
     async def translate(self, ctx):
         """Translation commands"""
         await ctx.send_help(ctx.command)
@@ -78,7 +81,7 @@ class Translate(commands.Cog):
         else:
             f_confidence = f'{r}%'
         
-        embed = discord.Embed(title="Translated something !", color=self.mio.color)
+        embed = Embed(title="Translated something !", color=self.bot.color)
         
         fields = [('original', text, False), 
                   ('Translation', resp.text, False), 
@@ -89,16 +92,11 @@ class Translate(commands.Cog):
             embed.add_field(name=name, value=value, inline=inline)
         
         await ctx.display(embed=embed)
-    
-
-    
-
-class LanguageNotFoundError(commands.CommandError):
+                
+class LanguageNotFoundError(CommandError):
     pass
 
 
 
 
         
-def setup(mio):
-    mio.add_cog(Translate(mio))

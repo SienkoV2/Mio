@@ -27,19 +27,24 @@ from asyncio import sleep
 import discord
 from discord.ext import commands
 
-from config import BOOTUP_CHANNEL
+from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class MioInfo(commands.Cog):
-    def __init__(self, mio):
-        self.mio = mio 
-        mio.loop.create_task(self._fetch_github_embed())
+class MioInfoCog(commands.Cog):        
+    def __on_cog_load(self, bot):
+        self.bot = bot 
+        self.bot.loop.create_task(self.__fetch_github_embed())
+    
+    def cog_unload(self):
+        print('unloaded')
+    
     
     @commands.command(name='source')
     async def source(self, ctx):
         """Show Mio's source code"""
-        self.embed.color = self.mio.color
-        await ctx.display(embed=self.embed)
+        await self.bot.wait_until_ready()
+        self.__embed.color = self.bot.color
+        await ctx.display(embed=self.__embed)
     
     @commands.command(name='stats')
     async def stats(self, ctx):
@@ -60,30 +65,23 @@ class MioInfo(commands.Cog):
         
         await ctx.display(embed=embed)    
     
-    async def _members_stats(self) -> Iterator[int]:
+    async def __members_stats(self) -> Iterator[int]:
         """Async iterators good"""
         mio = self.mio
         for container in (mio.guilds, mio.get_all_channels(), mio.get_all_members()):
             yield sum(1 for _ in container)
         
-    async def _bot_stats(self):
+    async def __bot_stats(self):
         """Async iterators good"""
-        
         groups = filter(lambda c : isinstance(c, commands.Group), self.mio.walk_commands())
         for container in (self.mio.cogs, groups, self.mio.walk_commands()):
             yield sum(1 for _ in container)
                                 
-    async def _fetch_github_embed(self):
-        """For some reasons, it gets autoformatted when refetching it"""
-        link = 'https://github.com/Saphielle-Akiyama/Mio'
-        await self.mio.wait_until_ready()
-        msg = await self.mio.get_channel(BOOTUP_CHANNEL).send(link)
+    async def __fetch_github_embed(self):
+        await self.bot.wait_until_ready()
+        channel = await self.bot.fetch_channel(BOOTUP_CHANNEL)
+        msg = await channel.send(GITHUB_LINK)
         await sleep(2)
-        msg_w_embed = await msg.channel.fetch_message(msg.id)
+        msg_with_embed = await channel.fetch_message(msg.id)
         await msg.delete()
-        self.embed = msg_w_embed.embeds[0]
-        
-        
-        
-def setup(mio):
-    mio.add_cog(MioInfo(mio))
+        self.__embed = msg_with_embed.embeds[0]

@@ -39,7 +39,7 @@ from discord.ext.commands import (AutoShardedBot, CommandNotFound,
                                   UserInputError, CheckFailure,
                                   CommandError)
 
-from core.ctx import MioCtx
+from core.ctx import NewCtx
 from config import GLOBAL_USER_COOLDOWN
 
 class MioBot(AutoShardedBot):
@@ -57,7 +57,7 @@ class MioBot(AutoShardedBot):
         self.load_extension('jishaku')
         
     def load_all_extensions(self):
-        for file in Path('cogs').glob('**/*.py'):
+        for file in Path('cogs').glob('**/__init__.py'):
             *tree, _ = file.parts
             try:
                 self.load_extension(f"{'.'.join(tree)}.{file.stem}")
@@ -74,8 +74,7 @@ class MioBot(AutoShardedBot):
                 if await self.can_run(ctx, call_once=True):
                     bucket = self._cd.get_bucket(ctx.message)
                     retry_after = bucket.update_rate_limit()
-                    if retry_after: 
-                        return await self.__dispatch_clock(ctx)
+                    if retry_after: return await self.__dispatch_clock(ctx)
                     self._clocks.discard(ctx.author.id)
                     await ctx.command.invoke(ctx)
                     
@@ -92,7 +91,7 @@ class MioBot(AutoShardedBot):
             self.loop.create_task(ctx.add_reaction('⏰'))
             self._clocks.add(id_)        
         
-    async def get_context(self, message, *, cls = MioCtx):
+    async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
     
@@ -116,7 +115,38 @@ class MioBot(AutoShardedBot):
         await ctx.display(embed=Embed(title=f'Error : {type(exception).__name__}',
                                       color=self.color,
                                       description=f"```py\n{lines}```"))
+    
+    # Added a new special __on_cog_load function that is executed for
+    def add_cog(self, cog):
+        for loader in filter(lambda m: m.endswith('__on_cog_load'), dir(cog)):
+            try:
+                getattr(cog, loader)(self)
+            except Exception as e:
+                e_args = (type(e), e, e.__traceback__)
+                print_exception(*e_args, file=stderr)
+            else:
+                print(f'Loaded sub-cog : {loader[1:-13]}')
+        return super().add_cog(cog)
+    
+    def remove_cog(self, name):
+        cog = self._BotBase__cogs.pop(name, None) # private attrs are no more with the power of autocopletion :)
+        if cog is None:
+            return
         
+        help_command = self._help_command
+        if help_command and help_command.cog is cog:
+            help_command.cog = None
+            
+        for unloader in filter(lambda m : m.endswith('__on_cog_unload'), dir(cog)):
+            try:
+                getattr(cog, unloader)()
+            except Exception as e:
+                e_args = (type(e), e, e.__traceback__)
+                print_exception(*e_args, file=stderr)
+            else:
+                print(f'Unloaded sub-cog : {unloader[1:-15]}')
+        cog._eject(self)
+      
     @property
     def color(self):
         return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
@@ -124,13 +154,13 @@ class MioBot(AutoShardedBot):
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)
-        print(f"{'-'*50}\nLoaded extension : {name}")
+        print(f"Loaded extension : {name}\n{'-'*50}")
         
     def unload_extension(self, name):
         super().unload_extension(name)
-        print(f"{'-'*50}\nUnloaded extention : {name}")
+        print(f"Unloaded extention : {name}\n{'-'*50}")
                 
     def reload_extension(self, name):
         super().reload_extension(name)
-        print(f"{'-'*50}\nReloaded extension : {name}")
+        print(f"Reloaded extension : {name}\n{'-'*50}")
     
