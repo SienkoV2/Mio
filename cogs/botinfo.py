@@ -44,36 +44,41 @@ class MioInfo(commands.Cog):
     @commands.command(name='stats')
     async def stats(self, ctx):
         """Shows some stats about the bot"""
-        guilds, channels, members = [n async for n in self._get_numbers()]
+        guilds, channels, members = [n async for n in self._members_stats()]
+        cogs, groups, commands = [n async for n in self._bot_stats()]
         embed = discord.Embed(title='Stats', color=self.mio.color)
 
         fields = [('Guilds', f'{guilds} guilds'), 
                   ('Channels', f'{channels} channels'), 
-                  ('Members', f'{members} members')]
+                  ('Members', f'{members} online members'),
+                  ('Cogs', f'{cogs} cogs'),
+                  ('Groups', f'{groups} groups'),
+                  ('Commands', f'{commands} commands')]
         
         for name, value in fields:
             embed.add_field(name=name, value=value)
         
         await ctx.display(embed=embed)    
     
-    async def _get_numbers(self) -> Iterator[int]:
+    async def _members_stats(self) -> Iterator[int]:
         """Async iterators good"""
         mio = self.mio
         for container in (mio.guilds, mio.get_all_channels(), mio.get_all_members()):
             yield sum(1 for _ in container)
         
+    async def _bot_stats(self):
+        """Async iterators good"""
         
-        
-
-                    
-                    
-                    
+        groups = filter(lambda c : isinstance(c, commands.Group), self.mio.walk_commands())
+        for container in (self.mio.cogs, groups, self.mio.walk_commands()):
+            yield sum(1 for _ in container)
+                                
     async def _fetch_github_embed(self):
         """For some reasons, it gets autoformatted when refetching it"""
         link = 'https://github.com/Saphielle-Akiyama/Mio'
         await self.mio.wait_until_ready()
         msg = await self.mio.get_channel(BOOTUP_CHANNEL).send(link)
-        await sleep(5)
+        await sleep(2)
         msg_w_embed = await msg.channel.fetch_message(msg.id)
         await msg.delete()
         self.embed = msg_w_embed.embeds[0]

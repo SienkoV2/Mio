@@ -7,16 +7,8 @@ class Test(commands.Cog):
         self.mio = mio
         
     @commands.command()
-    async def test(self, ctx, n : int):
-        appinfo = await ctx.bot.application_info()
-
-        embed = discord.Embed(title='Hello', color=ctx.bot.color)
-
-        for attr_name in dir(appinfo):
-            attr = getattr(appinfo, attr_name)
-            print(attr)
-
-        return await ctx.send(embed=embed)
+    async def test(self, ctx, amount : int = 5):
+        await ctx.display(embeds=[discord.Embed(title='hello') for _ in range(amount)])
 
 
 

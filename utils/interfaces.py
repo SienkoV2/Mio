@@ -38,51 +38,41 @@ class Paginator(MioDisplay):
     """Used to show multiple pages"""
     @button(emoji='🔢', position=0)
     async def on_input_emoji(self, payload):
-        msg = await self._channel.send('Which page do you want to see ?')
+        msg = await self.channel.send('Which page do you want to see ?')
         new_index = await self.wait_for_message()
         await self.goto_index(new_index - 1)
         await msg.delete()
             
     @button(emoji='⏮', position=1)
-    async def on_full_back(self, payload):
-        await self.goto_index('first')
-
+    async def on_full_back(self, payload): await self.goto_index('first')
     @button(emoji='◀', position=2)
-    async def on_back(self, payload):
-        await self.page_down()
-
-    @button(emoji='⏹', position=3)
-    async def on_stop(self, payload):
-        await self.stop()
-
-    @button(emoji='▶', position=4)
-    async def on_next_button(self, payload):
-        await self.page_up()
-
-    @button(emoji='⏭', position=5)
-    async def on_full_forward(self, payload):
-        await self.goto_index('last')
+    async def on_back(self, payload): await self.page_down()
+    @button(emoji='▶', position=3)
+    async def on_next_button(self, payload): await self.page_up()
+    @button(emoji='⏭', position=4)
+    async def on_full_forward(self, payload): await self.goto_index('last')
+    @button(emoji='⏹', position=5)
+    async def on_stop(self, payload): self.is_running = False
         
 # Shortpaginator (2 - 5) pages
 class ShortPaginator(MioDisplay):
     def __init__(self, ctx, **options):
         super().__init__(ctx, **options)
-        self.buttons = ('⏹️', '1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣')
+        self.buttons = ('1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣')
             
     async def run_until_complete(self):
         await self.start()
-        for emoji, _ in zip(self.buttons, range(self._max_index + 2)):
+        for emoji, _ in zip(self.buttons, range(self.max_index + 1)):
             await self.msg.add_reaction(emoji)
-            
-        while not self._is_closed:
-            payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
+        await self.msg.add_reaction('⏹️')
+        
+        while self.is_running:
+            payload, self.unable_to_delete = await self.wait_for_reaction(self.unable_to_delete)
             if (emoji := getattr(payload, 'emoji', None)):
                 if str(emoji) == '⏹️':
-                    await self.stop()
+                    self.is_running = False
                 else:
-                    await self.goto_index(self.buttons.index(str(emoji)) - 1)
-            else:
-                self._is_closed = True
+                    await self.goto_index(self.buttons.index(str(emoji)))
                 
         await self.after()
         
@@ -90,8 +80,7 @@ class ShortPaginator(MioDisplay):
 class Prompt(MioDisplay):
     """Used to display a single page"""
     @button(emoji='⏹', position=0)
-    async def on_stop_button(self, payload):
-        await self.stop()
+    async def on_stop_button(self, payload): self.is_running = False
         
 # Autodetection 
 async def autodetect(ctx, **options) -> Union[Prompt, Paginator]:
@@ -124,7 +113,7 @@ async def autodetect(ctx, **options) -> Union[Prompt, Paginator]:
     contents, embeds = contents_embeds
         
     max_len = max(len(contents), len(embeds))
-    
+        
     if max_len <= 1:
         return Prompt(ctx, contents=contents, embeds=embeds, **options)
     

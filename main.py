@@ -32,3 +32,4 @@ from core import MioBot
 if __name__ == '__main__':
     MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
     
+    

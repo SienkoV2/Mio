@@ -34,6 +34,8 @@ import async_cleverbot as ac
 from config import TRAVITIA_TOKEN
 
 
+from random import choice
+
 class Cleverbot(Cog):
     def __init__(self, mio):
         self.mio = mio
@@ -41,7 +43,6 @@ class Cleverbot(Cog):
         self.cb_client = ac.Cleverbot(TRAVITIA_TOKEN)
         self.cb_client.set_context(ac.DictContext(self.cb_client))
         
-    
     @Cog.listener()
     async def on_message(self, msg : Message):        
         ctx = await self.mio.get_context(msg)
@@ -58,9 +59,15 @@ class Cleverbot(Cog):
                                           emotion=emotion)
         
         f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild is not None else cb_ans.text
-        
         await ctx.send(f_ans)
         
+    async def cog_unload(self):
+        """Calls the func to close the aiohttp session"""
+        self.mio.loop.create_task(close())
+        
+    async def close(self):
+        """Closes the aiohttp session."""
+        await self.cb_client.session.close()
         
 def setup(mio):
     mio.add_cog(Cleverbot(mio))

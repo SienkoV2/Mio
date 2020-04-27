@@ -4,3 +4,4 @@ config/__init__.py
 config/__pycache__/__init__.cpython-38.pyc
 main.py
 
+*.pyc

@@ -44,11 +44,12 @@ class MioCtx(Context):
         await self.message.add_reaction(emoji)
     
     async def display(self, **options):
-        """Directly calls the autodetect function"""
+        """Automatically detects which paginator to use"""
         interface = await autodetect(self, **options)
         await interface.run_until_complete()
     
     async def emojis(self):
+        """Finds all custom emojis"""
         msg_txt = self.message.content
         for emoji in findall(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>$', msg_txt):
             try:

@@ -67,6 +67,7 @@ class MioBot(AutoShardedBot):
                 
     # overriding some defaults
     async def invoke(self, ctx):
+        """Adds a silent cooldown on all commands"""
         if ctx.command is not None:
             self.dispatch('command', ctx)
             try:
@@ -74,7 +75,7 @@ class MioBot(AutoShardedBot):
                     bucket = self._cd.get_bucket(ctx.message)
                     retry_after = bucket.update_rate_limit()
                     if retry_after: 
-                        return await self.dispatch_clock(ctx)
+                        return await self.__dispatch_clock(ctx)
                     self._clocks.discard(ctx.author.id)
                     await ctx.command.invoke(ctx)
                     
@@ -85,13 +86,11 @@ class MioBot(AutoShardedBot):
             else:
                 self.dispatch('command_completion', ctx)
     
-    async def dispatch_clock(self, ctx):
+    async def __dispatch_clock(self, ctx):
         id_ = ctx.author.id
         if id_ not in self._clocks:
-            await ctx.add_reaction('⏰')
+            self.loop.create_task(ctx.add_reaction('⏰'))
             self._clocks.add(id_)        
-        
-    
         
     async def get_context(self, message, *, cls = MioCtx):
         """Overrides the default Ctx"""
