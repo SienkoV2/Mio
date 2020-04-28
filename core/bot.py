@@ -107,45 +107,14 @@ class MioBot(AutoShardedBot):
         
         verbosity = 1
         if (is_owner := await self.is_owner(ctx.author)):
-            verbosity += 7
+            verbosity += 3
             
-        lines = ''.join(format_exception(*e_args, 4))
+        lines = ''.join(format_exception(*e_args, verbosity))
         
         await ctx.display(embed=Embed(title=f'Error : {type(exception).__name__}',
                                       color=self.color,
                                       description=f"```py\n{lines}```"))
-    
-    # Added a new special __on_cog_load function that is executed for subcogs
-    def add_cog(self, cog):
-        for loader in filter(lambda m: m.endswith(SPECIAL_COG_LOAD), dir(cog)):
-            try:
-                getattr(cog, loader)(self)
-            except Exception as e:
-                e_args = (type(e), e, e.__traceback__)
-                print_exception(*e_args, file=stderr)
-            else:
-                print(f'Loaded sub-cog : {loader[1:-len(SPECIAL_COG_LOAD)]}')
-        return super().add_cog(cog)
-    
-    # Added a new special __on_cog_unload function that is executed for subcogs
-    def remove_cog(self, name):
-        cog = self._BotBase__cogs.pop(name, None) 
-        if cog is None:
-            return
-        help_command = self._help_command
-        if help_command and help_command.cog is cog:
-            help_command.cog = None
-        
-        for unloader in filter(lambda m : m.endswith(SPECIAL_COG_UNLOAD), dir(cog)):
-            try:
-                getattr(cog, unloader)()
-            except Exception as e:
-                e_args = (type(e), e, e.__traceback__)
-                print_exception(*e_args, file=stderr)
-            else:
-                print(f'Unloaded sub-cog : {unloader[1:len(SPECIAL_COG_UNLOAD)]}')
-        cog._eject(self)
-      
+              
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)

@@ -31,12 +31,10 @@ from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
 class MioInfoCog(commands.Cog):        
-    def __on_cog_load(self, bot):
+    def __init__(self, bot):
         self.bot = bot 
         self.bot.loop.create_task(self.__fetch_github_embed())
     
-    def cog_unload(self):
-        print('unloaded')
     
     
     @commands.command(name='source')
@@ -86,5 +84,5 @@ class MioInfoCog(commands.Cog):
         await msg.delete()
         self.__embed = msg_with_embed.embeds[0]
         
-def setup(_):
-    pass
+def setup(bot):
+    bot.add_cog(MioInfoCog(bot))

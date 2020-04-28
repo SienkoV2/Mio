@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
 
-class RockPaperScissorCog(commands.Cog):
-    def __on_cog_load(self, bot):
+class RockPaperScissorCog(commands.Cog, name='Games'):
+    def __init__(self, bot):
         self.bot = bot
         
     @commands.command(name='hello')
@@ -17,5 +17,5 @@ class RockPaperScissorCog(commands.Cog):
     async def hahayes(self, ctx):
         await ctx.send('hahayes')
    
-def setup(_):
-    pass
+def setup(bot):
+    bot.add_cog(RockPaperScissorCog(bot))

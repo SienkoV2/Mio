@@ -37,8 +37,8 @@ from config import TRAVITIA_TOKEN
 
 from discord.ext import commands
 
-class CleverbotCog(Cog):
-    def __on_cog_load(self, bot):
+class CleverbotCog(Cog, name='Fun'):
+    def __init__(self, bot):
         self.bot = bot
         self.cb_client = ac.Cleverbot(TRAVITIA_TOKEN)
         self.cb_client.set_context(ac.DictContext(self.cb_client))
@@ -62,5 +62,5 @@ class CleverbotCog(Cog):
         f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild else cb_ans.text
         await ctx.send(f_ans)
 
-def setup(_):
-    pass
+def setup(bot):
+    bot.add_cog(CleverbotCog(bot))
