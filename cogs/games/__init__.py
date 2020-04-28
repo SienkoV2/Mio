@@ -26,10 +26,17 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
+
+
+import discord
+from discord.ext import commands
 from cogs.games.rps import RockPaperScissorCog
+
+
 
 class Games(RockPaperScissorCog):
     pass
 
 def setup(bot):
     bot.add_cog(Games())
+    

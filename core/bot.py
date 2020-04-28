@@ -40,7 +40,7 @@ from discord.ext.commands import (AutoShardedBot, CommandNotFound,
                                   CommandError)
 
 from core.ctx import NewCtx
-from config import GLOBAL_USER_COOLDOWN
+from config import GLOBAL_USER_COOLDOWN, SPECIAL_COG_LOAD, SPECIAL_COG_UNLOAD
 
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
@@ -61,9 +61,8 @@ class MioBot(AutoShardedBot):
             *tree, _ = file.parts
             try:
                 self.load_extension(f"{'.'.join(tree)}.{file.stem}")
-            except Exception as err:
-                eargs = (type(err), err, err.__traceback__)
-                print_exception(*eargs, file=stderr)
+            except Exception as e:
+                print_exception(type(e), e, e.__traceback__, file=stderr)
                 
     # overriding some defaults
     async def invoke(self, ctx):
@@ -74,21 +73,21 @@ class MioBot(AutoShardedBot):
                 if await self.can_run(ctx, call_once=True):
                     bucket = self._cd.get_bucket(ctx.message)
                     retry_after = bucket.update_rate_limit()
-                    if retry_after: return await self.__dispatch_clock(ctx)
+                    if retry_after and not await self.is_owner(ctx.author): 
+                        return await self.__dispatch_clock(ctx)
                     self._clocks.discard(ctx.author.id)
                     await ctx.command.invoke(ctx)
                     
             except CommandError as exc:
-                bucket.reset()
-                self._clocks.discard(ctx.author.id)
+                self._clocks.discard(ctx.author.id) ; bucket.reset()
                 await ctx.command.dispatch_error(ctx, exc)
             else:
                 self.dispatch('command_completion', ctx)
-    
+                
     async def __dispatch_clock(self, ctx):
         id_ = ctx.author.id
         if id_ not in self._clocks:
-            self.loop.create_task(ctx.add_reaction('⏰'))
+            await ctx.add_reaction('⏰')
             self._clocks.add(id_)        
         
     async def get_context(self, message, *, cls=NewCtx):
@@ -116,41 +115,37 @@ class MioBot(AutoShardedBot):
                                       color=self.color,
                                       description=f"```py\n{lines}```"))
     
-    # Added a new special __on_cog_load function that is executed for
+    # Added a new special __on_cog_load function that is executed for subcogs
     def add_cog(self, cog):
-        for loader in filter(lambda m: m.endswith('__on_cog_load'), dir(cog)):
+        for loader in filter(lambda m: m.endswith(SPECIAL_COG_LOAD), dir(cog)):
             try:
                 getattr(cog, loader)(self)
             except Exception as e:
                 e_args = (type(e), e, e.__traceback__)
                 print_exception(*e_args, file=stderr)
             else:
-                print(f'Loaded sub-cog : {loader[1:-13]}')
+                print(f'Loaded sub-cog : {loader[1:-len(SPECIAL_COG_LOAD)]}')
         return super().add_cog(cog)
     
+    # Added a new special __on_cog_unload function that is executed for subcogs
     def remove_cog(self, name):
-        cog = self._BotBase__cogs.pop(name, None) # private attrs are no more with the power of autocopletion :)
+        cog = self._BotBase__cogs.pop(name, None) 
         if cog is None:
             return
-        
         help_command = self._help_command
         if help_command and help_command.cog is cog:
             help_command.cog = None
-            
-        for unloader in filter(lambda m : m.endswith('__on_cog_unload'), dir(cog)):
+        
+        for unloader in filter(lambda m : m.endswith(SPECIAL_COG_UNLOAD), dir(cog)):
             try:
                 getattr(cog, unloader)()
             except Exception as e:
                 e_args = (type(e), e, e.__traceback__)
                 print_exception(*e_args, file=stderr)
             else:
-                print(f'Unloaded sub-cog : {unloader[1:-15]}')
+                print(f'Unloaded sub-cog : {unloader[1:len(SPECIAL_COG_UNLOAD)]}')
         cog._eject(self)
       
-    @property
-    def color(self):
-        return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
-        
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)
@@ -164,3 +159,8 @@ class MioBot(AutoShardedBot):
         super().reload_extension(name)
         print(f"Reloaded extension : {name}\n{'-'*50}")
     
+    # Returns a random color, felt like adding it     
+    @property
+    def color(self):
+        return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
+        

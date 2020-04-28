@@ -85,3 +85,6 @@ class MioInfoCog(commands.Cog):
         msg_with_embed = await channel.fetch_message(msg.id)
         await msg.delete()
         self.__embed = msg_with_embed.embeds[0]
+        
+def setup(_):
+    pass

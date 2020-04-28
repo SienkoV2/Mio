@@ -35,6 +35,7 @@ import async_cleverbot as ac
 
 from config import TRAVITIA_TOKEN
 
+from discord.ext import commands
 
 class CleverbotCog(Cog):
     def __on_cog_load(self, bot):
@@ -51,12 +52,15 @@ class CleverbotCog(Cog):
         
         self.bot.loop.create_task(ctx.trigger_typing())
         
-        if msg.mention_everyone : return
+        if msg.mention_everyone: 
+            return
               
         cb_ans = await self.cb_client.ask(msg.content, 
                                           id_=msg.author.id, 
                                           emotion=ac.Emotion.happy)
         
-        f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild is not None else cb_ans.text
+        f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild else cb_ans.text
         await ctx.send(f_ans)
-        
+
+def setup(_):
+    pass

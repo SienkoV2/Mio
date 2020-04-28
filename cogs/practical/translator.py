@@ -100,3 +100,5 @@ class LanguageNotFoundError(CommandError):
 
 
         
+def setup(_):
+    pass

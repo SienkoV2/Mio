@@ -31,5 +31,12 @@ from cogs.fun.cleverbot import CleverbotCog
 class Fun(CleverbotCog):
     pass
 
+
+
+
+
+
+
 def setup(bot):
     bot.add_cog(Fun())
+
