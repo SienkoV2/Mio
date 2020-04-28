@@ -29,7 +29,7 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 import discord
 from discord.ext import commands
 from utils.miodisplay import MioDisplay, button
-
+from asyncio import gather
 
 class RockPaperScissorCog(commands.Cog, name='Games'):
     def __init__(self, bot):
@@ -38,15 +38,28 @@ class RockPaperScissorCog(commands.Cog, name='Games'):
     @commands.command(name='rps')
     async def rps(self, ctx, opponent : discord.Member = None):
         if opponent is None:
-            title = 'An open rock paper scissor game has been launched'
-            result = await ChooseAnyoneMenu(ctx, 
-                                      embed=discord.Embed(title=title,
-                                                          color=self.bot.color)).run_once()
+            title = f'React to duel {ctx.author} in a rock paper scissor duel'
+            embed = discord.Embed(title=title, color=self.bot.color)    
+            result = await ChooseAnyoneMenu(ctx, embed=embed)
             opponent = result.member
             
+        else:
+            title = f'{ctx.author} asked you to join a rock paper scissor duel'
+            embed = discord.Embed(title=title, color=self.bot.color)
+            result = await AcceptMenu(ctx, embed=embed, content=opponent.mention)
+            opponent = result.member
+           
         if opponent is None:
-            return await ctx.display(embed=discord.Embed(title='No one accepted the duel',
-                                                         color=self.bot.color))
+            embed = discord.Embed(title='No one accepted the duel',
+                                  color=self.bot.color)
+            
+            return await ctx.display(embed=embed)
+        
+        embed = discord.Embed(title='Pick an object using the reaction !')
+        menu = RpsMenu(ctx, channel=ctx.author)
+        
+        results = await gather()
+        
             
             
     
@@ -83,7 +96,7 @@ class ChooseAnyoneMenu(MioDisplay):
         
     @button(emoji='🎲', position=0)
     async def on_die(self, payload):
-        self.member = payload.member
+        self.user_id = payload.member
         
     async def after(self):
         await self.msg.delete()   

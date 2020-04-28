@@ -39,7 +39,7 @@ class MioInfoCog(commands.Cog, name='infos'):
     async def source(self, ctx):
         """Show Mio's source code"""
         await self.bot.wait_until_ready()
-        owner = await self.bot.get_user(self.bot.owner_id)
+        owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
         self.__embed.color = self.bot.color
         await ctx.display(embed=self.__embed)

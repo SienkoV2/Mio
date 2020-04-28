@@ -111,10 +111,12 @@ class MioBot(AutoShardedBot):
             
         lines = ''.join(format_exception(*e_args, verbosity))
         
-        await ctx.display(embed=Embed(title=f'Error : {type(exception).__name__}',
-                                      color=self.color,
-                                      description=f"```py\n{lines}```"))
-              
+        embed=Embed(title=f'Error : {type(exception).__name__}',
+                    color=self.color,
+                    description=f"```py\n{lines}```")
+        
+        await ctx.display(embed=embed)
+                            
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)
