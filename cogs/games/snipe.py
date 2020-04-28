@@ -25,11 +25,3 @@ __title__ = 'Mio'
 __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
-
-from cogs.practical.translator import TranslatorCog
-
-class Practical(TranslatorCog):
-    pass
-
-def setup(bot):
-    bot.add_cog(Practical())

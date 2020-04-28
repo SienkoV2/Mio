@@ -30,17 +30,17 @@ from discord.ext import commands
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class MioInfoCog(commands.Cog):        
+class MioInfoCog(commands.Cog, name='infos'):        
     def __init__(self, bot):
         self.bot = bot 
         self.bot.loop.create_task(self.__fetch_github_embed())
-    
-    
     
     @commands.command(name='source')
     async def source(self, ctx):
         """Show Mio's source code"""
         await self.bot.wait_until_ready()
+        owner = await self.bot.get_user(self.bot.owner_id)
+        await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
         self.__embed.color = self.bot.color
         await ctx.display(embed=self.__embed)
     

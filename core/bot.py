@@ -40,7 +40,7 @@ from discord.ext.commands import (AutoShardedBot, CommandNotFound,
                                   CommandError)
 
 from core.ctx import NewCtx
-from config import GLOBAL_USER_COOLDOWN, SPECIAL_COG_LOAD, SPECIAL_COG_UNLOAD
+from config import GLOBAL_USER_COOLDOWN
 
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
@@ -57,7 +57,7 @@ class MioBot(AutoShardedBot):
         self.load_extension('jishaku')
         
     def load_all_extensions(self):
-        for file in Path('cogs').glob('**/__init__.py'):
+        for file in Path('cogs').glob('**/*.py'):
             *tree, _ = file.parts
             try:
                 self.load_extension(f"{'.'.join(tree)}.{file.stem}")

@@ -26,19 +26,34 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
+from typing import Tuple, Union
+
 from discord import Embed
 from discord.ext.commands import Cog, group,CommandError
 
 from aiogoogletrans import Translator, LANGUAGES, LANGCODES
 from utils.converters import to_lower
 
-class TranslatorCog(Cog):
-    def __on_cog_load(self, bot):
+def to_language(arg : str) -> Tuple[Union[str, None], str]:
+    """Converts a string to a valid aiogoogletrans language
+
+    Arguments:
+        arg {str} -- the string to convert
+
+    Returns:
+        Tuple -- language if found else none + original
+    """    
+    lang = None
+    if (low := arg) in LANGUAGES:
+        lang = arg
+    else:
+        lang = LANGCODES.get(arg)
+    return (lang, arg)
+
+class TranslatorCog(Cog, name='Practical'):
+    def __init__(self, bot):
         self.bot = bot
         self.translator = Translator()
-
-    def __on_cog_unload(self):
-        print('unloaded')
 
     @group(name='translate', invoke_without_command=True)
     async def translate(self, ctx):
@@ -46,25 +61,28 @@ class TranslatorCog(Cog):
         await ctx.send_help(ctx.command)
         
     @translate.command(name='from')
-    async def translate_from(self, ctx, *, text):
-        """Translates a text to english"""        
-        resp = await self.translator.translate(text)
+    async def translate_from(self, ctx, language : to_language, *, text : str):
+        """
+        Translates a text from a language to english
+        Will use the whole text if the language isn't provided
+        """        
+        lang, original = language
+        if lang is None:
+            text = original + text
+        resp = await self.translator.translate(text, src=lang or 'auto')
         await self._display(ctx, resp, text)
 
     @translate.command(name='to')
-    async def translate_to(self, ctx, language : to_lower, *, text):
+    async def translate_to(self, ctx, language : to_language, *, text : str):
         """Translates a text to another language"""
-        if (low := language) in LANGUAGES:
-            lang = language
-        else:
-            lang = LANGCODES.get(language)
+        lang, original = language
         if lang is None:
             raise LanguageNotFoundError(message=f"Couldn't find the language : {language}")
         
-        resp = await self.translator.translate(text, dest=lang)
+        resp = await self.translator.translate(text, dest=language)
         
         await self._display(ctx, resp, text)
-        
+                
     async def _display(self, ctx, resp, text) -> None:
         """Displays the response 
 
@@ -97,8 +115,9 @@ class LanguageNotFoundError(CommandError):
     pass
 
 
-
+    
+        
 
         
-def setup(_):
-    pass
+def setup(bot):
+    bot.add_cog(TranslatorCog(bot))

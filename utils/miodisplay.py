@@ -38,17 +38,22 @@ from discord import RawReactionActionEvent, Embed, HTTPException, Message
 class MioDisplay:
     def __init__(self, ctx, **options):
         """
-        Base class that defines some helper functions, 
-        not meant to be inherited from
+        Base class that defines some helper functions
         """
+        # Preffered way to keep data 
+        self.data = {}
+        
         # Easily accessible, but shouldn't be edited
         self.ctx = ctx
         self.bot = options.pop('bot', None) or ctx.bot
         self.loop = options.pop('loop', None) or ctx.bot.loop
         
         # Editable
-        self.embeds = options.pop('embeds', [])
-        self.contents = options.pop('contents', [])
+        self.embed = options.pop('embed', None)
+        self.content = options.pop('content', None)
+        
+        self.embeds = options.pop('embeds', []) or [self.embed]
+        self.contents = options.pop('contents', []) or [self.content]
         
         # Shouldn't be edited, but still accessible 
         self.channel = options.pop('channel', None) or ctx.channel
@@ -75,7 +80,7 @@ class MioDisplay:
         self.msg = await self.channel.send(**to_send)
         self._buttons = await self.__add_reactions(self._raw_buttons)
 
-    async def run_until_complete(self) -> True:
+    async def run_until_complete(self):
         """Keeps cycling until a stop order is given
 
         Returns:
@@ -87,7 +92,13 @@ class MioDisplay:
             await self.cycle()
 
         await self.after()
-        return True
+        return self
+    
+    async def run_once(self):
+        """Runs once"""
+        for method in (self.start, self.cycle, self.after):
+            await method()
+        return self
     
     async def cycle(self) -> Union[RawReactionActionEvent, None]:
         """Cycles once
