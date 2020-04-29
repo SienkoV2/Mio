@@ -84,7 +84,7 @@ class MioDisplay:
         """Keeps cycling until a stop order is given
 
         Returns:
-            True -- When the cycle is done.
+            self -- When the cycle is done.
         """        
         await self.start()
 
@@ -160,15 +160,11 @@ class MioDisplay:
     # lvl 2  
     def __formatter(self, index) -> Tuple[int, Dict]:
         """Formats the embed with the current page"""
-        curr_content, curr_embed = [*self.__curr_pages(self.contents, 
-                                                     self.embeds, 
-                                                     index)]
+        curr_content, curr_embed = [*self.__curr_pages(self.contents, self.embeds, index)]
 
         max_index = max(len(self.contents)-1, len(self.embeds)-1) 
 
-        curr_embed = self.__format_embed(curr_embed, 
-                                         self.index, 
-                                         max_index)
+        curr_embed = self.__format_embed(curr_embed, self.index, max_index)
 
         return max_index, {'content' : curr_content, 'embed' : curr_embed}
 

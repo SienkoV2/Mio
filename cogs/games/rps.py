@@ -40,13 +40,13 @@ class RockPaperScissorCog(commands.Cog, name='Games'):
         if opponent is None:
             title = f'React to duel {ctx.author} in a rock paper scissor duel'
             embed = discord.Embed(title=title, color=self.bot.color)    
-            result = await ChooseAnyoneMenu(ctx, embed=embed)
+            result = await ChooseAnyoneMenu(ctx, embed=embed, author_only=False).run_once()
             opponent = result.member
             
         else:
             title = f'{ctx.author} asked you to join a rock paper scissor duel'
             embed = discord.Embed(title=title, color=self.bot.color)
-            result = await AcceptMenu(ctx, embed=embed, content=opponent.mention)
+            result = await AcceptMenu(ctx, embed=embed, content=opponent.mention, author_only=False).run_once()
             opponent = result.member
            
         if opponent is None:
@@ -55,11 +55,14 @@ class RockPaperScissorCog(commands.Cog, name='Games'):
             
             return await ctx.display(embed=embed)
         
-        embed = discord.Embed(title='Pick an object using the reaction !')
-        menu = RpsMenu(ctx, channel=ctx.author)
+        embed = discord.Embed(title='Pick an object using the reaction !',
+                              color=self.bot.color)
         
-        results = await gather()
+        author_menu = RpsMenu(ctx, channel=ctx.author, embed=embed).run_once()
+        opponent_menu = RpsMenu(ctx, channel=opponent, embed=embed).run_once()
+        author_result, opponent_result = await gather(author_menu, opponent_menu)
         
+        await ctx.send(f'{author_result.choice} / {opponent_result.choice}')
             
             
     
