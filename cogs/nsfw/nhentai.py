@@ -63,12 +63,13 @@ class DoujinReader(Paginator):
     @button(emoji='📖', position=6)
     async def on_book(self, payload):
         self.embeds = [*self._format_doujins(self.doujins[self._index])]
+        self.front_page_index = self._index
         await self.goto_index('FIRST')
         
     @button(emoji='↩️', position=7)
     async def on_return(self, payload):
         self.embeds = self.original_embeds
-        await self.goto_index(self._index)
+        await self.goto_index(self.front_page_index)
 
     def _format_doujins(self, doujin):
         for image_url in doujin._images:
