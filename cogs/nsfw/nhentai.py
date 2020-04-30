@@ -60,9 +60,7 @@ class DoujinReader(Paginator):
     @button(emoji='📖', position=6)
     async def on_book(self, _):
         await self.ctx.send('Hello')
-        print('book')
-        curr_doujin = self.doujins[self._index]
-        title = curr_doujin.title
+        self.embeds = [discord.Embed(title='modified') for _ in range(10)]
         
         
     def _format_doujins(self, title : str, image_urls : List[str]):
