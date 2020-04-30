@@ -67,14 +67,11 @@ class DoujinReader(Paginator):
         
     @button(emoji='↩️', position=7)
     async def on_return(self, payload):
-        self.embeds = self.original_embeds
+        self.embeds = [discord.Embed() for _ in range(self._max_index)]
+        self.contents = self.doujins[self._index]._images
         await self.goto_index(self._index)
 
-    def _format_doujins(self, doujin):
-        for image_url in doujin._images:
-            yield discord.Embed(color=self.bot.color
-                                ).set_image(url=image_url)
-
+   
     
 class NhentaiReaderCog(commands.Cog, name='Nsfw'):
     def __init__(self, bot):
