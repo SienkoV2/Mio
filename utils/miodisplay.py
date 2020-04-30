@@ -70,7 +70,7 @@ class MioDisplay:
 
     async def start(self):
         """Only sends the initial message and adds reactions"""          
-        self._index, self._max_index, to_send = self.__move_page(self._index)
+        self._index, self._max_index, to_send = await self.__move_page(self._index)
         
         self.msg = await self.channel.send(**to_send)
         
