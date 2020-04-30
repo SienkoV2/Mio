@@ -26,7 +26,7 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from re import findall
+
 from typing import Union
 
 from discord import Embed, Message
@@ -44,15 +44,29 @@ class Paginator(MioDisplay):
         await msg.delete()
             
     @button(emoji='⏮', position=1)
-    async def on_full_back(self, payload): await self.goto_index('first')
+    async def on_full_back(self, _): 
+        """First page"""
+        await self.goto_index('FIRST')
+        
     @button(emoji='◀', position=2)
-    async def on_back(self, payload): await self.page_down()
+    async def on_back(self, _): 
+        """Page - 1"""
+        await self.page_down()
+        
     @button(emoji='▶', position=3)
-    async def on_next_button(self, payload): await self.page_up()
+    async def on_next_button(self, _): 
+        """Page + 1"""
+        await self.page_up()
+        
     @button(emoji='⏭', position=4)
-    async def on_full_forward(self, payload): await self.goto_index('last')
+    async def on_full_forward(self, _): 
+        """Last page"""
+        await self.goto_index('LAST')
+        
     @button(emoji='⏹', position=5)
-    async def on_stop(self, payload): self.is_running = False
+    async def on_stop(self, _): 
+        """Stops cycling"""
+        self.is_running = False
         
 # Shortpaginator (2 - 5) pages
 class ShortPaginator(MioDisplay):
@@ -80,10 +94,12 @@ class ShortPaginator(MioDisplay):
 class Prompt(MioDisplay):
     """Used to display a single page"""
     @button(emoji='⏹', position=0)
-    async def on_stop_button(self, payload): self.is_running = False
+    async def on_stop_button(self, _): 
+        """Stops running"""
+        self.is_running = False
         
 # Autodetection 
-async def autodetect(ctx, **options) -> Union[Prompt, Paginator]:
+def autodetect(**options) -> Union[Prompt, ShortPaginator, Paginator]:
     """Autodetects whether to return a prompt or a paginator 
 
     Arguments:
@@ -113,12 +129,12 @@ async def autodetect(ctx, **options) -> Union[Prompt, Paginator]:
     contents, embeds = contents_embeds
         
     max_len = max(len(contents), len(embeds))
-        
-    if max_len <= 1:
-        return Prompt(ctx, contents=contents, embeds=embeds, **options)
     
-    elif max_len <= 5:
-        return ShortPaginator(ctx, contents=contents, embeds=embeds, **options)
+    # should prolly switch to a for loop
+    kwargs = {'contents' : contents, 'embeds' : embeds}
     
+    for max_size, Interface in [(1, Prompt), (5, ShortPaginator)]:
+        if max_len <= max_size:
+            return Interface(**kwargs, **options)
     else:
-        return Paginator(ctx, contents=contents, embeds=embeds, **options)    
+        return Paginator(**kwargs, **options)

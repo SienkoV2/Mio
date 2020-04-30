@@ -45,8 +45,7 @@ class NewCtx(Context):
     
     async def display(self, **options):
         """Automatically detects which paginator to use"""
-        interface = await autodetect(self, **options)
-        await interface.run_until_complete()
+        return await autodetect(ctx=self, **options).run_until_complete()
     
     async def emojis(self):
         """Finds all custom emojis"""

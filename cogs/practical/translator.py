@@ -32,7 +32,7 @@ from discord import Embed
 from discord.ext.commands import Cog, group,CommandError
 
 from aiogoogletrans import Translator, LANGUAGES, LANGCODES
-from utils.converters import to_lower
+
 
 def to_language(arg : str) -> Tuple[Union[str, None], str]:
     """Converts a string to a valid aiogoogletrans language
@@ -44,10 +44,10 @@ def to_language(arg : str) -> Tuple[Union[str, None], str]:
         Tuple -- language if found else none + original
     """    
     lang = None
-    if (low := arg) in LANGUAGES:
+    if (low := arg.lower()) in LANGUAGES:
         lang = arg
     else:
-        lang = LANGCODES.get(arg)
+        lang = LANGCODES.get(low)
     return (lang, arg)
 
 class TranslatorCog(Cog, name='Practical'):

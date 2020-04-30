@@ -57,12 +57,16 @@ class MioBot(AutoShardedBot):
         self.load_extension('jishaku')
         
     def load_all_extensions(self):
+        errors = []
         for file in Path('cogs').glob('**/*.py'):
             *tree, _ = file.parts
             try:
                 self.load_extension(f"{'.'.join(tree)}.{file.stem}")
             except Exception as e:
-                print_exception(type(e), e, e.__traceback__, file=stderr)
+                errors.append(e)
+        
+        for e in errors: # printing exception after everything is loaded
+            print_exception(type(e), e, e.__traceback__, file=stderr)
                 
     # overriding some defaults
     async def invoke(self, ctx):
@@ -71,11 +75,14 @@ class MioBot(AutoShardedBot):
             self.dispatch('command', ctx)
             try:
                 if await self.can_run(ctx, call_once=True):
+                    
                     bucket = self._cd.get_bucket(ctx.message)
                     retry_after = bucket.update_rate_limit()
                     if retry_after and not await self.is_owner(ctx.author): 
                         return await self.__dispatch_clock(ctx)
+                    
                     self._clocks.discard(ctx.author.id)
+                    
                     await ctx.command.invoke(ctx)
                     
             except CommandError as exc:
@@ -89,7 +96,7 @@ class MioBot(AutoShardedBot):
         if id_ not in self._clocks:
             await ctx.add_reaction('⏰')
             self._clocks.add(id_)        
-        
+                
     async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
@@ -111,9 +118,9 @@ class MioBot(AutoShardedBot):
             
         lines = ''.join(format_exception(*e_args, verbosity))
         
-        embed=Embed(title=f'Error : {type(exception).__name__}',
-                    color=self.color,
-                    description=f"```py\n{lines}```")
+        embed = Embed(title=f'Error : {type(exception).__name__}',
+                      color=self.color,
+                      description=f"```py\n{lines}```")
         
         await ctx.display(embed=embed)
                             

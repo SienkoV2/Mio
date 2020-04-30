@@ -30,26 +30,26 @@ from discord.ext import commands
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class MioInfoCog(commands.Cog, name='infos'):        
+class botInfoCog(commands.Cog, name='infos'):        
     def __init__(self, bot):
         self.bot = bot 
-        self.bot.loop.create_task(self.__fetch_github_embed())
+        self.bot.loop.create_task(self._fetch_github_embed())
     
     @commands.command(name='source')
     async def source(self, ctx):
-        """Show Mio's source code"""
+        """Show bot's source code"""
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
-        self.__embed.color = self.bot.color
-        await ctx.display(embed=self.__embed)
+        self._embed.color = self.bot.color
+        await ctx.display(embed=self._embed)
     
     @commands.command(name='stats')
     async def stats(self, ctx):
         """Shows some stats about the bot"""
         guilds, channels, members = [n async for n in self._members_stats()]
         cogs, groups, commands = [n async for n in self._bot_stats()]
-        embed = discord.Embed(title='Stats', color=self.mio.color)
+        embed = discord.Embed(title='Stats', color=self.bot.color)
 
         fields = [('Guilds', f'{guilds} guilds'), 
                   ('Channels', f'{channels} channels'), 
@@ -63,26 +63,26 @@ class MioInfoCog(commands.Cog, name='infos'):
         
         await ctx.display(embed=embed)    
     
-    async def __members_stats(self) -> Iterator[int]:
+    async def _members_stats(self) -> Iterator[int]:
         """Async iterators good"""
-        mio = self.mio
-        for container in (mio.guilds, mio.get_all_channels(), mio.get_all_members()):
+        bot = self.bot
+        for container in (bot.guilds, bot.get_all_channels(), bot.get_all_members()):
             yield sum(1 for _ in container)
         
-    async def __bot_stats(self):
+    async def _bot_stats(self):
         """Async iterators good"""
-        groups = filter(lambda c : isinstance(c, commands.Group), self.mio.walk_commands())
-        for container in (self.mio.cogs, groups, self.mio.walk_commands()):
+        groups = filter(lambda c : isinstance(c, commands.Group), self.bot.walk_commands())
+        for container in (self.bot.cogs, groups, self.bot.walk_commands()):
             yield sum(1 for _ in container)
                                 
-    async def __fetch_github_embed(self):
+    async def _fetch_github_embed(self):
         await self.bot.wait_until_ready()
         channel = await self.bot.fetch_channel(BOOTUP_CHANNEL)
         msg = await channel.send(GITHUB_LINK)
         await sleep(2)
         msg_with_embed = await channel.fetch_message(msg.id)
         await msg.delete()
-        self.__embed = msg_with_embed.embeds[0]
+        self._embed = msg_with_embed.embeds[0]
         
 def setup(bot):
-    bot.add_cog(MioInfoCog(bot))
+    bot.add_cog(botInfoCog(bot))

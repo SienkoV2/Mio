@@ -28,4 +28,3 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from utils.miodisplay import *
 from utils.interfaces import *
-from utils.converters import *

@@ -39,23 +39,26 @@ class SnipeCog(commands.Cog, name='Fun'):
         self.snipes = {g.id : {} for g in self.bot.guilds}  
 
     @commands.Cog.listener()
-    async def on_guild_join(self, guild): self.snipes[guild.id] = {}
+    async def on_guild_join(self, guild): 
+        self.snipes[guild.id] = {}
+        
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild): self.snipes.pop(guild.id)
+    async def on_guild_remove(self, guild): 
+        self.snipes.pop(guild.id)
         
     @commands.Cog.listener()
     async def on_message_delete(self, msg : discord.Message):
         """Main listener"""
         await self.bot.wait_until_ready()
-        self.snipes[msg.guild.id][msg.channel.id] = msg
+        if not msg.author.bot:
+            self.snipes[msg.guild.id][msg.channel.id] = msg
         
     @commands.command(name='snipe')
     async def snipe(self, ctx):
         msg = self.snipes[ctx.guild.id].get(ctx.channel.id, None)
         if msg is None:
             content = "Couldn't find any sniped messages in this channel"
-            return await ctx.send(content=content,
-                                  delete_after=5)
+            return await ctx.send(content=content, delete_after=5)
         
         embed = discord.Embed(title=f'Sniped a message from {msg.author}',
                               color=self.bot.color,
