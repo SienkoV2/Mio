@@ -61,7 +61,7 @@ class DoujinReader(Paginator):
     async def on_book(self, _):
         await self.ctx.send('Hello')
         self.embeds = [discord.Embed(title='modified') for _ in range(10)]
-        
+        await self.goto_index('FIRST')
         
     def _format_doujins(self, title : str, image_urls : List[str]):
         for image in image_urls:
