@@ -88,7 +88,8 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
                                                          color=self.bot.color))    
        
         await DoujinReader(ctx=ctx, 
-                           embeds=[*self._format_pages(query)]
+                           embeds=[*self._format_pages(query)],
+                           doujins=query
                            ).run_until_complete()
         
 
