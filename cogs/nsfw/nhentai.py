@@ -62,9 +62,7 @@ class DoujinReader(Paginator):
         
     @button(emoji='📖', position=6)
     async def on_book(self, payload):
-        self.embeds = [discord.Embed(color=self.bot.color) for _ in range(self._max_index)]
         self.contents = self.doujins[self._index]._images
-        await self.ctx.send(self.embeds)
         await self.goto_index('FIRST')
         
     @button(emoji='↩️', position=7)
