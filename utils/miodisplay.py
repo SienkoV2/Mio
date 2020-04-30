@@ -192,7 +192,7 @@ class MioDisplay:
         """
         def check(p : RawReactionActionEvent):
             return (p.message_id == self.msg.id 
-                    and p.channel_id == self.msg.channel.id
+                    and p.channel_id == getattr(self.msg.channel, 'id', None)
                     and (p.user_id == self.ctx.author.id 
                          or not self.author_only 
                          and p.user_id != self.bot.user.id))

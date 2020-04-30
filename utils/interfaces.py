@@ -33,8 +33,16 @@ from discord import Embed, Message
 
 from utils.miodisplay import MioDisplay, button
 
+
+class Prompt(MioDisplay):
+    """Used to display a single page"""
+    @button(emoji='⏹', position=100)
+    async def on_stop_button(self, payload): 
+        """Stops running"""
+        self.is_running = False
+
 # Paginator - 10 pages or more 
-class Paginator(MioDisplay):
+class Paginator(Prompt):
     """Used to show multiple pages"""
     @button(emoji='🔢', position=0)
     async def on_input_emoji(self, payload):
@@ -44,27 +52,27 @@ class Paginator(MioDisplay):
         await msg.delete()
             
     @button(emoji='⏮', position=1)
-    async def on_full_back(self, _): 
+    async def on_full_back(self, payload): 
         """First page"""
         await self.goto_index('FIRST')
         
     @button(emoji='◀', position=2)
-    async def on_back(self, _): 
+    async def on_back(self, payload): 
         """Page - 1"""
         await self.page_down()
         
     @button(emoji='▶', position=3)
-    async def on_next_button(self, _): 
+    async def on_next_button(self, payload): 
         """Page + 1"""
         await self.page_up()
         
     @button(emoji='⏭', position=4)
-    async def on_full_forward(self, _): 
+    async def on_full_forward(self, payload): 
         """Last page"""
         await self.goto_index('LAST')
         
     @button(emoji='⏹', position=5)
-    async def on_stop(self, _): 
+    async def on_stop(self, payload): 
         """Stops cycling"""
         self.is_running = False
         
@@ -91,12 +99,7 @@ class ShortPaginator(MioDisplay):
         await self.after()
         
 # Prompt - 1 page 
-class Prompt(MioDisplay):
-    """Used to display a single page"""
-    @button(emoji='⏹', position=0)
-    async def on_stop_button(self, _): 
-        """Stops running"""
-        self.is_running = False
+
         
 # Autodetection 
 def autodetect(**options) -> Union[Prompt, ShortPaginator, Paginator]:
