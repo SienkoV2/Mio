@@ -56,18 +56,19 @@ class DoujinshiConverter(commands.Converter):
 class DoujinReader(Paginator):
     def __init__(self, **options):
         super().__init__(**options)
+        self.original_embeds = self.embeds
+        self.doujins = options.pop('doujins')
         
     @button(emoji='📖', position=6)
     async def on_book(self, _):
-        await self.ctx.send('Hello')
-        self.embeds = [discord.Embed(title='modified') for _ in range(10)]
+        self.embeds = [*self._format_doujins(self.doujins[self._index])]
         await self.goto_index('FIRST')
         
-    def _format_doujins(self, title : str, image_urls : List[str]):
-        for image in image_urls:
-            yield discord.Embed(title=title,
+    def _format_doujins(self, doujin):
+        for image_url in doujin._images:
+            yield discord.Embed(title=doujin.name,
                                 color=self.bot.color
-                                ).set_image(url=image)
+                                ).set_image(url=image_url)
 
     
 class NhentaiReaderCog(commands.Cog, name='Nsfw'):
