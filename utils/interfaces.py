@@ -71,11 +71,6 @@ class Paginator(Prompt):
         """Last page"""
         await self.goto_index('LAST')
         
-    @button(emoji='⏹', position=5)
-    async def on_stop(self, payload): 
-        """Stops cycling"""
-        self.is_running = False
-        
 # Shortpaginator (2 - 5) pages
 class ShortPaginator(MioDisplay):
     def __init__(self, ctx, **options):
