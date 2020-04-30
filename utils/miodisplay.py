@@ -26,9 +26,11 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
+from time import perf_counter
 from asyncio import FIRST_COMPLETED
 from asyncio import wait as async_wait
 from asyncio import TimeoutError as AsyncTimeoutError
+from asyncio import sleep as async_sleep
 from typing import List, Union, Tuple, Dict
 
 from discord.ext.commands import EmojiConverter, BadArgument
@@ -44,23 +46,24 @@ class MioDisplay:
         self.bot = options.pop('bot', None) or self.ctx.bot
         self.loop = options.pop('loop', None) or self.ctx.bot.loop
         self.channel = options.pop('channel', None) or self.ctx.channel
+        self.is_running = True
         
         # Displayed stuff
         self.embed = options.pop('embed', None)
         self.content = options.pop('content', None)
-        
         self.embeds = options.pop('embeds', []) or [self.embed]
         self.contents = options.pop('contents', []) or [self.content]
         
         # Wait for reaction / message            
-        self.is_running = True
-        self.author_only = options.pop('author_only', None)
+        self.author_only = options.pop('author_only', True)
         self.timeout = options.pop('timeout', 30)
+        self.cooldown = options.pop('cooldown', 3)
 
-        # do not touch 
+        # shouldn't be edited
+        self._last_pressed = perf_counter() 
+        self._unable_to_delete = False
         self._index = options.pop('index', 0)
         self._max_index = max(len(self.contents)-1, len(self.embeds)-1)    
-        self._unable_to_delete = False
         self._raw_buttons = {
             k : v for k, v in filter(None, map(lambda n: getattr(getattr(self, n), '_button', None), dir(self)))
         }   
@@ -146,11 +149,19 @@ class MioDisplay:
         await self.msg.edit(**to_send)
         
     # lvl 3
-    def __move_page(self, new_amount : int) -> Tuple[int, int, Dict]:
-        """Does all necessary checks, adds a footer to the embed if needed"""
+    async def __move_page(self, new_amount : int) -> Tuple[int, int, Dict]:
+        """
+        Does all necessary checks, adds a footer to the embed if needed,
+        also handles internal cooldown
+        """
         self._index = self.__check_page_index(new_amount)
 
         max_index, to_send = self.__formatter(self._index)
+
+        new = perf_counter()
+        
+        await async_sleep(3 - (new - self._last_pressed))
+        self._last_pressed = new
 
         return self._index, max_index, to_send
 

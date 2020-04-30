@@ -80,25 +80,18 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
     def __init__(self, bot):
         self.bot = bot  
         
-    @commands.group(name='nhentai', invoke_without_command=True)
-    async def nhentai_(self, ctx):
-        """You're a degenerate"""
-        await ctx.send_help(ctx.command)
         
-    @nhentai_.command(name='search')
+    @commands.command(name='nhentai')
     @commands.is_nsfw()
-    async def search(self, ctx, query : DoujinshiConverter):
+    async def nhentai_(self, ctx, query : DoujinshiConverter):
         if not (pages := [*self._format_pages(query)]):
             return await ctx.display(embed=discord.Embed(title='No doujin found', 
                                                          color=self.bot.color))    
        
         await DoujinReader(ctx=ctx, 
                            embeds=[*self._format_pages(query)],
-                           doujins=query
-                           ).run_until_complete()
+                           doujins=query).run_until_complete()
         
-
-                
     def _format_pages(self, results : List[nhentai.Doujinshi]):
         for doujin in results:            
             embed = discord.Embed(title=f'{doujin.name} ({doujin.magic})',
@@ -114,7 +107,8 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
 
             # tags
             if (tags := getattr(doujin, 'tags', None)):     
-                f_tags = ' | '.join(map(lambda t : f"`{t}`", tags)) 
+                f_tags = ' | '.join((f"`{t}`" for t in tags)) 
+                
                 embed.add_field(name='Tags', value=f_tags, inline=False)
 
             yield embed
