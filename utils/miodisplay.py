@@ -128,12 +128,12 @@ class MioDisplay:
     # Control displayed pages
     async def page_up(self, amount : int = 1):
         """Moves goes up a certain amount of pages"""
-        self._index, self._max_index, to_send = self.__move_page(self._index + amount)
+        self._index, self._max_index, to_send = await self.__move_page(self._index + amount)
         await self.msg.edit(**to_send)        
 
     async def page_down(self, amount : int = 1):
         """Moves down a certain amount of pages"""
-        self._index, self._max_index, to_send = self.__move_page(self._index - amount)
+        self._index, self._max_index, to_send = await self.__move_page(self._index - amount)
         await self.msg.edit(**to_send)
 
     async def goto_index(self, position : Union[int, str]):
@@ -145,7 +145,7 @@ class MioDisplay:
         else: 
             new_index = position
         
-        self._index, self._max_index, to_send = self.__move_page(new_index)
+        self._index, self._max_index, to_send = await self.__move_page(new_index)
         await self.msg.edit(**to_send)
         
     # lvl 3
