@@ -160,7 +160,7 @@ class MioDisplay:
 
         new = perf_counter()
         
-        await async_sleep(3 - (new - self._last_pressed))
+        await async_sleep(self.cooldown - (new - self._last_pressed))
         self._last_pressed = new
 
         return self._index, max_index, to_send
@@ -208,14 +208,13 @@ class MioDisplay:
                          or not self.author_only 
                          and p.user_id != self.bot.user.id))
         
-        wf_kwargs = {'event' : 'raw_reaction_add', 
-                     'timeout' : self.timeout, 
+        wf_kwargs = {'timeout' : self.timeout, 
                      'check' : check}
         
-        to_wait_for = [self.bot.wait_for(**wf_kwargs)]
+        to_wait_for = [self.bot.wait_for('raw_reaction_add', **wf_kwargs)]
         
         if unable_to_delete:
-            to_wait_for.append(self.bot.wait_for(**wf_kwargs))
+            to_wait_for.append(self.bot.wait_for('raw_reaction_remove', **wf_kwargs))
 
         done, pending = await async_wait(to_wait_for, return_when=FIRST_COMPLETED)
         
@@ -329,7 +328,8 @@ class MioDisplay:
             
     def __check_perms(self):
         member = channel.guild.get_member(self.bot.user.id)
-        return member.permissions_in(channel).manage_messages
+        perms = member.permissions_in(channel)
+        return (perms.manage_messages or perms.administrator)
         
             
 # helpers outside of the class
