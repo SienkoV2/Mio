@@ -112,11 +112,10 @@ class MioBot(AutoShardedBot):
         if not isinstance(error, (UserInputError, CheckFailure)):
             print_exception(*e_args, file=stderr)
         
-        verbosity = 1
         if (is_owner := await self.is_owner(ctx.author)):
-            verbosity += 3
-            
-        lines = ''.join(format_exception(*e_args, verbosity))
+            lines = ''.join(format_exception(*e_args, 4))
+        else:
+            lines = str(exception)
         
         embed = Embed(title=f'Error : {type(exception).__name__}',
                       color=self.color,

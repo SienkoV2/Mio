@@ -67,8 +67,7 @@ class TranslatorCog(Cog, name='Practical'):
         Will use the whole text if the language isn't provided
         """        
         lang, original = language
-        if lang is None:
-            text = original + text
+        await ctx.send(text)
         resp = await self.translator.translate(text, src=lang or 'auto')
         await self._display(ctx, resp, text)
 
@@ -79,7 +78,7 @@ class TranslatorCog(Cog, name='Practical'):
         if lang is None:
             raise LanguageNotFoundError(message=f"Couldn't find the language : {language}")
         
-        resp = await self.translator.translate(text, dest=language)
+        resp = await self.translator.translate(text, dest=lang)
         
         await self._display(ctx, resp, text)
                 

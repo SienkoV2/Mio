@@ -73,14 +73,12 @@ class DoujinReader(Paginator):
 
     def _format_doujins(self, doujin):
         for image_url in doujin._images:
-            yield discord.Embed(color=self.bot.color
-                                ).set_image(url=image_url)
+            yield discord.Embed(color=self.bot.color).set_image(url=image_url)
 
     
 class NhentaiReaderCog(commands.Cog, name='Nsfw'):
     def __init__(self, bot):
         self.bot = bot  
-        
         
     @commands.command(name='nhentai')
     @commands.is_nsfw()
@@ -96,7 +94,8 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
     def _format_pages(self, results : List[nhentai.Doujinshi]):
         for doujin in results:            
             embed = discord.Embed(title=f'{doujin.name} ({doujin.magic})',
-                                  color=self.bot.color)
+                                  color=self.bot.color,
+                                  url=f'nhentai.net/g/{doujin.magic}')
             
             # Cover image
             if (cover_url := getattr(doujin, 'cover', None)):
@@ -109,6 +108,9 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
             # tags
             if (tags := getattr(doujin, 'tags', None)):     
                 f_tags = ' | '.join((f"`{t}`" for t in tags)) 
+                
+                if [t for t in tags if 'loli' in tags]:
+                    continue
                 
                 embed.add_field(name='Tags', value=f_tags, inline=False)
 
