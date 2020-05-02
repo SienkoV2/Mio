@@ -26,15 +26,12 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from logging import basicConfig, INFO
-from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
-from core import MioBot
+import discord
+from discord.ext import commands
 
-if __name__ == '__main__':    
-    MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
-    
-    
-    
-    
-    
-    
+class UserModerationCog(commands.Cog, name='Moderation'):
+    def __init__(self, bot):
+        self.bot = bot
+        
+def setup(bot):
+    bot.add_cog(UserModerationCog(bot))

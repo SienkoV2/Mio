@@ -28,6 +28,7 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 import discord
 from discord.ext import commands
+from utils.formatters import ColoredEmbed
 
 class SnipeCog(commands.Cog, name='Fun'):
     def __init__(self, bot):
@@ -60,9 +61,8 @@ class SnipeCog(commands.Cog, name='Fun'):
             content = "Couldn't find any sniped messages in this channel"
             return await ctx.send(content=content, delete_after=5)
         
-        embed = discord.Embed(title=f'Sniped a message from {msg.author}',
-                              color=self.bot.color,
-                              description=msg.content)
+        embed = ColoredEmbed(title=f'Sniped a message from {msg.author}',
+                             description=msg.content)
         
         await ctx.display(embed=embed)
         

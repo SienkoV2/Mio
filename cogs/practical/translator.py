@@ -28,7 +28,7 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from typing import Tuple, Union
 
-from discord import Embed
+from utils.formatters import ColoredEmbed
 from discord.ext.commands import Cog, group,CommandError
 
 from aiogoogletrans import Translator, LANGUAGES, LANGCODES
@@ -48,7 +48,7 @@ def to_language(arg : str) -> Tuple[Union[str, None], str]:
         lang = arg
     else:
         lang = LANGCODES.get(low)
-    return (lang, arg)
+    return lang
 
 class TranslatorCog(Cog, name='Practical'):
     def __init__(self, bot):
@@ -66,19 +66,16 @@ class TranslatorCog(Cog, name='Practical'):
         Translates a text from a language to english
         Will use the whole text if the language isn't provided
         """        
-        lang, original = language
-        await ctx.send(text)
-        resp = await self.translator.translate(text, src=lang or 'auto')
+        resp = await self.translator.translate(text, src=language or 'auto')
         await self._display(ctx, resp, text)
 
     @translate.command(name='to')
     async def translate_to(self, ctx, language : to_language, *, text : str):
         """Translates a text to another language"""
-        lang, original = language
-        if lang is None:
+        if language is None:
             raise LanguageNotFoundError(message=f"Couldn't find the language : {language}")
         
-        resp = await self.translator.translate(text, dest=lang)
+        resp = await self.translator.translate(text, dest=language)
         
         await self._display(ctx, resp, text)
                 
@@ -98,7 +95,7 @@ class TranslatorCog(Cog, name='Practical'):
         else:
             f_confidence = f'{r}%'
         
-        embed = Embed(title="Translated something !", color=self.bot.color)
+        embed = ColoredEmbed(title="Translated something !")
         
         fields = [('original', text, False), 
                   ('Translation', resp.text, False), 
@@ -112,11 +109,6 @@ class TranslatorCog(Cog, name='Practical'):
                 
 class LanguageNotFoundError(CommandError):
     pass
-
-
-    
-        
-
         
 def setup(bot):
     bot.add_cog(TranslatorCog(bot))

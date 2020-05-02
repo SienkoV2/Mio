@@ -26,15 +26,17 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from logging import basicConfig, INFO
-from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
-from core import MioBot
+from random import random, uniform
+from discord import Embed, Color
 
-if __name__ == '__main__':    
-    MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
-    
-    
-    
-    
-    
-    
+class ColoredEmbed(Embed):
+    """Haha yes"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.color = Color.from_hsv(random(), uniform(0.75, 0.95), 1)
+        
+def chunker(to_chunk : list, chunk_size : int = 4):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(to_chunk), chunk_size):
+        yield to_chunk[i:i + chunk_size]
+        

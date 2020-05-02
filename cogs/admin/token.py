@@ -26,15 +26,30 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from logging import basicConfig, INFO
-from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
-from core import MioBot
+import cv2
+import pytesseract
+pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
-if __name__ == '__main__':    
-    MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
+import discord
+from discord.ext import commands
+
+class TokenReader(commands.Cog, name='admin'):
+    def __init__(self, bot):
+        self.bot = bot
     
+    def extract_from_img(self, filename : str):
+        img = cv2.imread(filename)
+        return pytesseract.image_to_string(image=img)
+        
     
-    
-    
-    
-    
+    @commands.command(name='test')
+    @commands.is_owner()
+    async def test(self, ctx, filename : str):
+        text = await self.bot.loop.run_in_executor(None, 
+                                                   self.extract_from_img, 
+                                                   filename)
+        
+        await ctx.send(text)
+        
+def setup(bot):
+    bot.add_cog(TokenReader(bot))

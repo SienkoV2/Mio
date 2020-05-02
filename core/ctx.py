@@ -57,3 +57,6 @@ class NewCtx(Context):
                 emoji = await PartialEmojiConverter().convert(self, msg_txt)
             finally:
                 yield emoji
+                
+                
+                

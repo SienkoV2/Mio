@@ -33,41 +33,31 @@ from asyncio import sleep
 from random import random, uniform
 from traceback import print_exception, format_exception
 
-from discord import Embed, Color
+from discord import Color
 from discord.ext.commands import (AutoShardedBot, CommandNotFound, 
                                   CooldownMapping, BucketType, 
                                   UserInputError, CheckFailure,
                                   CommandError)
 
+from utils.formatters import ColoredEmbed
 from core.ctx import NewCtx
-from config import GLOBAL_USER_COOLDOWN
+from config import GLOBAL_USER_COOLDOWN, EXTENSION_LOADER_PATH
 
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self._cd = CooldownMapping.from_cooldown(1.0, 5.0, BucketType.user)
         self._clocks = set()
-        self.load_all_extensions()
-        self.setup_jishaku()
+        self._setup_default()
         
     # bootup
-    def setup_jishaku(self):
+    def _setup_default(self):
         for env in ('JISHAKU_NO_UNDERSCORE', 'JISHAKU_NO_UNDERSCORE'):
             environ[env] = 'true'
-        self.load_extension('jishaku')
-        
-    def load_all_extensions(self):
-        errors = []
-        for file in Path('cogs').glob('**/*.py'):
-            *tree, _ = file.parts
-            try:
-                self.load_extension(f"{'.'.join(tree)}.{file.stem}")
-            except Exception as e:
-                errors.append(e)
-        
-        for e in errors: # printing exception after everything is loaded
-            print_exception(type(e), e, e.__traceback__, file=stderr)
-                
+            
+        for ext in ('jishaku', EXTENSION_LOADER_PATH):
+            self.load_extension(ext)    
+                            
     # overriding some defaults
     async def invoke(self, ctx):
         """Adds a silent cooldown on all commands"""
@@ -79,7 +69,7 @@ class MioBot(AutoShardedBot):
                     bucket = self._cd.get_bucket(ctx.message)
                     retry_after = bucket.update_rate_limit()
                     if retry_after and not await self.is_owner(ctx.author): 
-                        return await self.__dispatch_clock(ctx)
+                        return await self._dispatch_clock(ctx)
                     
                     self._clocks.discard(ctx.author.id)
                     
@@ -91,7 +81,7 @@ class MioBot(AutoShardedBot):
             else:
                 self.dispatch('command_completion', ctx)
                 
-    async def __dispatch_clock(self, ctx):
+    async def _dispatch_clock(self, ctx):
         id_ = ctx.author.id
         if id_ not in self._clocks:
             await ctx.add_reaction('⏰')
@@ -112,14 +102,13 @@ class MioBot(AutoShardedBot):
         if not isinstance(error, (UserInputError, CheckFailure)):
             print_exception(*e_args, file=stderr)
         
-        if (is_owner := await self.is_owner(ctx.author)):
+        if await self.is_owner(ctx.author):
             lines = ''.join(format_exception(*e_args, 4))
         else:
             lines = str(exception)
         
-        embed = Embed(title=f'Error : {type(exception).__name__}',
-                      color=self.color,
-                      description=f"```py\n{lines}```")
+        embed = ColoredEmbed(title=f'Error : {type(exception).__name__}',
+                             description=f"```py\n{lines}```")
         
         await ctx.display(embed=embed)
                             
@@ -136,8 +125,3 @@ class MioBot(AutoShardedBot):
         super().reload_extension(name)
         print(f"Reloaded extension : {name}\n{'-'*50}")
     
-    # Returns a random color, felt like adding it     
-    @property
-    def color(self):
-        return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
-        

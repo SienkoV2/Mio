@@ -24,13 +24,14 @@ SOFTWARE.
 from typing import Iterator
 from asyncio import sleep
 
-import discord
+
 from discord.ext import commands
 
+from utils.formatters import ColoredEmbed
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class botInfoCog(commands.Cog, name='infos'):        
+class BotInfoCog(commands.Cog, name='infos'):        
     def __init__(self, bot):
         self.bot = bot 
         self.bot.loop.create_task(self._fetch_github_embed())
@@ -47,9 +48,9 @@ class botInfoCog(commands.Cog, name='infos'):
     @commands.command(name='stats')
     async def stats(self, ctx):
         """Shows some stats about the bot"""
-        guilds, channels, members = [n async for n in self._members_stats()]
-        cogs, groups, commands = [n async for n in self._bot_stats()]
-        embed = discord.Embed(title='Stats', color=self.bot.color)
+        guilds, channels, members = [*self._members_stats()]
+        cogs, groups, commands = [*self._bot_stats()]
+        embed = ColoredEmbed(title='Stats')
 
         fields = [('Guilds', f'{guilds} guilds'), 
                   ('Channels', f'{channels} channels'), 
@@ -63,13 +64,13 @@ class botInfoCog(commands.Cog, name='infos'):
         
         await ctx.display(embed=embed)    
     
-    async def _members_stats(self) -> Iterator[int]:
+    def _members_stats(self) -> Iterator[int]:
         """Async iterators good"""
         bot = self.bot
         for container in (bot.guilds, bot.get_all_channels(), bot.get_all_members()):
             yield sum(1 for _ in container)
         
-    async def _bot_stats(self):
+    def _bot_stats(self):
         """Async iterators good"""
         groups = filter(lambda c : isinstance(c, commands.Group), self.bot.walk_commands())
         for container in (self.bot.cogs, groups, self.bot.walk_commands()):
@@ -85,4 +86,4 @@ class botInfoCog(commands.Cog, name='infos'):
         self._embed = msg_with_embed.embeds[0]
         
 def setup(bot):
-    bot.add_cog(botInfoCog(bot))
+    bot.add_cog(BotInfoCog(bot))

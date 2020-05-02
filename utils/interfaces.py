@@ -44,10 +44,21 @@ class Prompt(MioDisplay):
 # Paginator - 10 pages or more 
 class Paginator(Prompt):
     """Used to show multiple pages"""
+    
     @button(emoji='🔢', position=0)
     async def on_input_emoji(self, payload):
         msg = await self.channel.send('Which page do you want to see ?')
-        new_index = await self.wait_for_message()
+        while self.is_running:
+            received_msg = await self.wait_for_message()
+            try:
+                new_index = int(received_msg.content)
+            except ValueError:
+                pass
+            else:
+                break
+        else:
+            new_index = 1
+            
         await self.goto_index(new_index - 1)
         await msg.delete()
             
@@ -73,18 +84,18 @@ class Paginator(Prompt):
         
 # Shortpaginator (2 - 5) pages
 class ShortPaginator(MioDisplay):
-    def __init__(self, ctx, **options):
-        super().__init__(ctx, **options)
+    def __init__(self, **options):
+        super().__init__(**options)
         self.buttons = ('1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣')
             
     async def run_until_complete(self):
         await self.start()
-        for emoji, _ in zip(self.buttons, range(self.max_index + 1)):
+        for emoji, _ in zip(self.buttons, range(self._max_index + 1)):
             await self.msg.add_reaction(emoji)
         await self.msg.add_reaction('⏹️')
         
         while self.is_running:
-            payload, self.unable_to_delete = await self.wait_for_reaction(self.unable_to_delete)
+            payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
             if (emoji := getattr(payload, 'emoji', None)):
                 if str(emoji) == '⏹️':
                     self.is_running = False

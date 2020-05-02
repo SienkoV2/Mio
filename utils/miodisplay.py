@@ -57,10 +57,10 @@ class MioDisplay:
         # Wait for reaction / message            
         self.author_only = options.pop('author_only', True)
         self.timeout = options.pop('timeout', 30)
-        self.cooldown = options.pop('cooldown', 5)
+        self.cooldown = options.pop('cooldown', 3)
 
         # shouldn't be edited
-        self._last_pressed = perf_counter() 
+        self._last_pressed = perf_counter() - self.cooldown
         self._unable_to_delete = False
         self._index = options.pop('index', 0)
         self._max_index = max(len(self.contents)-1, len(self.embeds)-1)    
@@ -117,9 +117,9 @@ class MioDisplay:
         Removes the reactions, clears it if possible, 
         otherwise removes them 1 by 1
         """
-        if self.__check_perms(): 
+        try:
             await self.msg.clear_reactions()
-        else:
+        except HTTPException:
             msg = await self.msg.channel.fetch_message(self.msg.id)
             for reaction in msg.reactions:
                 if reaction.me: 
@@ -194,8 +194,7 @@ class MioDisplay:
                 buttons = self.__update_buttons(buttons, emoji, func)
         return buttons
 
-    async def wait_for_reaction(self, 
-                                unable_to_delete : bool
+    async def wait_for_reaction(self, unable_to_delete : bool
                                 ) -> Tuple[Union[RawReactionActionEvent, None], bool]:
         """
         Waits for a reaction add or a reaction remove depending on whether
@@ -251,7 +250,7 @@ class MioDisplay:
                          or not self.author_only 
                          and m.author != self.bot.user))
     
-        while True:
+        while self.is_running:
             
             try:
                 msg = await self.bot.wait_for('message', timeout=self.timeout, check=check)
@@ -261,15 +260,8 @@ class MioDisplay:
                 return None
             
             else:
-                try:
-                    new_index = int(msg.content)
-                
-                except ValueError:
-                    pass
-                
-                else:
-                    self.loop.create_task(self.__delete_user_input(msg))
-                    return new_index
+                self.loop.create_task(self.__delete_user_input(msg))
+                return msg    
                         
     # lvl 1      
     def __check_page_index(self, index : int):
@@ -322,14 +314,10 @@ class MioDisplay:
         channel = self.channel
         if channel.guild is None: 
             return
-        
-        if self.__check_perms():
+        try:
             await msg.delete()
-            
-    def __check_perms(self):
-        member = channel.guild.get_member(self.bot.user.id)
-        perms = member.permissions_in(channel)
-        return (perms.manage_messages or perms.administrator)
+        except HTTPException:
+            pass
         
             
 # helpers outside of the class
