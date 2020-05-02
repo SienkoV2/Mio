@@ -45,11 +45,13 @@ class ExtensionLoadingCog(commands.Cog):
         self.loop.create_task(self.extensions_load(None, None))
         
     @commands.group(name='extensions', aliases=['ext'], invoke_without_command=True)
+    @commands.is_owner()
     async def extensions_(self, ctx):
         """Extensions managing commands"""
         await ctx.send_help(ctx.command)
         
     @extensions_.command(name='load')
+    @commands.is_owner()
     async def extensions_load(self, ctx, query : str = None):
         """
         Loads all extensions matching the query
@@ -66,6 +68,7 @@ class ExtensionLoadingCog(commands.Cog):
         await ctx.display(embeds=[*self._format('Loaded extensions', report)])
     
     @extensions_.command(name='reload', aliases=['re'])
+    @commands.is_owner()
     async def extension_reload(self, ctx, query : str = None):
         """
         Reloads all extensions matching the query
@@ -79,6 +82,7 @@ class ExtensionLoadingCog(commands.Cog):
         await ctx.display(embeds=[*self._format('Reloaded extensions', report)])
     
     @extensions_.command(name='unload', aliases=['un'])
+    @commands.is_owner()
     async def extensions_unload(self, ctx, query : str = None):
         """
         Unloads all extensions matching the query 
