@@ -37,7 +37,7 @@ from discord import Color
 from discord.ext.commands import (AutoShardedBot, CommandNotFound, 
                                   CooldownMapping, BucketType, 
                                   UserInputError, CheckFailure,
-                                  CommandError)
+                                  CommandError, NotOwner)
 
 from utils.formatters import ColoredEmbed
 from core.ctx import NewCtx
@@ -94,7 +94,7 @@ class MioBot(AutoShardedBot):
     async def on_command_error(self, ctx, exception):
         """Overrides the default error handler"""
         error = getattr(exception, "original", exception)
-        if isinstance(error, CommandNotFound):
+        if isinstance(error, (CommandNotFound, NotOwner)):
             return
         
         e_args = (type(exception), exception, exception.__traceback__)

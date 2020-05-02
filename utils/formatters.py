@@ -40,3 +40,4 @@ def chunker(to_chunk : list, chunk_size : int = 4):
     for i in range(0, len(to_chunk), chunk_size):
         yield to_chunk[i:i + chunk_size]
         
+        

@@ -41,6 +41,13 @@ class TokenReader(commands.Cog, name='admin'):
         img = cv2.imread(filename)
         return pytesseract.image_to_string(image=img)
         
+    @commands.Cog.listener()
+    async def on_message(self, msg : discord.Message):
+        pass
+    
+    
+    
+    
     
     @commands.command(name='test')
     @commands.is_owner()
