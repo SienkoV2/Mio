@@ -28,21 +28,24 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 import cv2
 import pytesseract
-pytesseract.pytesseract.tesseract_cmd = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 
 import discord
 from discord.ext import commands
+
+path = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
+pytesseract.pytesseract.tesseract_cmd = path
+
 
 class TokenReader(commands.Cog, name='admin'):
     def __init__(self, bot):
         self.bot = bot
     
-    def extract_from_img(self, filename : str):
+    def extract_from_img(self, filename: str):
         img = cv2.imread(filename)
         return pytesseract.image_to_string(image=img)
         
     @commands.Cog.listener()
-    async def on_message(self, msg : discord.Message):
+    async def on_message(self, msg: discord.Message):
         pass
     
     
@@ -51,7 +54,7 @@ class TokenReader(commands.Cog, name='admin'):
     
     @commands.command(name='test')
     @commands.is_owner()
-    async def test(self, ctx, filename : str):
+    async def test(self, ctx, filename: str):
         text = await self.bot.loop.run_in_executor(None, 
                                                    self.extract_from_img, 
                                                    filename)

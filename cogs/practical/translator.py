@@ -34,7 +34,7 @@ from discord.ext.commands import Cog, group,CommandError
 from aiogoogletrans import Translator, LANGUAGES, LANGCODES
 
 
-def to_language(arg : str) -> Tuple[Union[str, None], str]:
+def to_language(arg: str) -> Tuple[Union[str, None], str]:
     """Converts a string to a valid aiogoogletrans language
 
     Arguments:
@@ -44,11 +44,12 @@ def to_language(arg : str) -> Tuple[Union[str, None], str]:
         Tuple -- language if found else none + original
     """    
     lang = None
-    if (low := arg.lower()) in LANGUAGES:
+    if (low:= arg.lower()) in LANGUAGES:
         lang = arg
     else:
         lang = LANGCODES.get(low)
     return lang
+
 
 class TranslatorCog(Cog, name='Practical'):
     def __init__(self, bot):
@@ -61,7 +62,7 @@ class TranslatorCog(Cog, name='Practical'):
         await ctx.send_help(ctx.command)
         
     @translate.command(name='from')
-    async def translate_from(self, ctx, language : to_language, *, text : str):
+    async def translate_from(self, ctx, language: to_language, *, text: str):
         """
         Translates a text from a language to english
         Will use the whole text if the language isn't provided
@@ -70,7 +71,7 @@ class TranslatorCog(Cog, name='Practical'):
         await self._display(ctx, resp, text)
 
     @translate.command(name='to')
-    async def translate_to(self, ctx, language : to_language, *, text : str):
+    async def translate_to(self, ctx, language: to_language, *, text: str):
         """Translates a text to another language"""
         if language is None:
             raise LanguageNotFoundError(message=f"Couldn't find the language : {language}")
@@ -79,18 +80,12 @@ class TranslatorCog(Cog, name='Practical'):
         
         await self._display(ctx, resp, text)
                 
-    async def _display(self, ctx, resp, text) -> None:
-        """Displays the response 
-
-        Arguments:
-            ctx {commands.Context} -- ctx
-            resp {Response} -- the translator's response
-            text {str} -- The text that the user entered
-        """        
+    async def _display(self, ctx, resp, text: str) -> None:
+        """Displays the response"""        
         src = LANGUAGES.get(resp.src) or resp.src
         dest = LANGUAGES.get(resp.dest) or resp.dest
         
-        if (r := round(resp.confidence * 100, 1)) < 50.0:
+        if (r:= round(resp.confidence * 100, 1)) < 50.0:
             f_confidence = f'{r}% (might be innacurate)'
         else:
             f_confidence = f'{r}%'
@@ -107,8 +102,10 @@ class TranslatorCog(Cog, name='Practical'):
         
         await ctx.display(embed=embed)
                 
+                
 class LanguageNotFoundError(CommandError):
     pass
+        
         
 def setup(bot):
     bot.add_cog(TranslatorCog(bot))

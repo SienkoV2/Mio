@@ -29,9 +29,11 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 import discord
 from discord.ext import commands
 
+
 class UserModerationCog(commands.Cog, name='Moderation'):
     def __init__(self, bot):
         self.bot = bot
+        
         
 def setup(bot):
     bot.add_cog(UserModerationCog(bot))

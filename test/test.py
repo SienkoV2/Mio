@@ -1,9 +1,5 @@
-from pathlib import Path
+some_var = set()
 
-def _get_ext_path() -> Path:
-    for file in Path('cogs').glob('**/*.py'):
-        *tree, _ = file.parts
-        print(tree)
-        yield f"{'.'.join(tree)}.{file.stem}"
-        
-[*_get_ext_path()]
+hello = some_var.update('hello')
+
+print(hello)

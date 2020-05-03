@@ -28,14 +28,9 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from os import environ
 from sys import stderr
-from pathlib import Path
-from asyncio import sleep
-from random import random, uniform
 from traceback import print_exception, format_exception
 
-from discord import Color
-from discord.ext.commands import (AutoShardedBot, CommandNotFound, 
-                                  CooldownMapping, BucketType, 
+from discord.ext.commands import (AutoShardedBot, CooldownMapping, BucketType, 
                                   UserInputError, CheckFailure,
                                   CommandError, NotOwner)
 
@@ -43,50 +38,79 @@ from utils.formatters import ColoredEmbed
 from core.ctx import NewCtx
 from config import GLOBAL_USER_COOLDOWN, EXTENSION_LOADER_PATH
 
+
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._cd = CooldownMapping.from_cooldown(1.0, 5.0, BucketType.user)
-        self._clocks = set()
-        self._setup_default()
-        
+        self._setup_defaults()
+
+        for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
+            cd_args = (1.0, GLOBAL_USER_COOLDOWN, BucketType.user)
+            cd = CooldownMapping.from_cooldown(*cd_args)
+            setattr(self, attr, cd)
+
     # bootup
-    def _setup_default(self):
+    def _setup_defaults(self):
+        """Loads Jishaku and the extension loader"""
+        print('-' * 50)
         for env in ('JISHAKU_NO_UNDERSCORE', 'JISHAKU_NO_UNDERSCORE'):
             environ[env] = 'true'
-            
+
         for ext in ('jishaku', EXTENSION_LOADER_PATH):
             self.load_extension(ext)    
-                            
-    # overriding some defaults
+            
+    # anti spam
     async def invoke(self, ctx):
-        """Adds a silent cooldown on all commands"""
-        if ctx.command is not None:
-            self.dispatch('command', ctx)
-            try:
-                if await self.can_run(ctx, call_once=True):
-                    
-                    bucket = self._cd.get_bucket(ctx.message)
-                    retry_after = bucket.update_rate_limit()
-                    if retry_after and not await self.is_owner(ctx.author): 
-                        return await self._dispatch_clock(ctx)
-                    
-                    self._clocks.discard(ctx.author.id)
-                    
-                    await ctx.command.invoke(ctx)
-                    
-            except CommandError as exc:
-                self._clocks.discard(ctx.author.id) ; bucket.reset()
-                await ctx.command.dispatch_error(ctx, exc)
-            else:
-                self.dispatch('command_completion', ctx)
+        if ctx.command is None:
+            return
+        
+        self.dispatch('command', ctx)
+        try:
+            if await self.can_run(ctx, call_once=True):
                 
-    async def _dispatch_clock(self, ctx):
-        id_ = ctx.author.id
-        if id_ not in self._clocks:
-            await ctx.add_reaction('⏰')
-            self._clocks.add(id_)        
+                is_owner = await self.is_owner(ctx.author)
                 
+                command_bucket = self._command_cd.get_bucket(ctx.message)
+                retry_after = command_bucket.update_rate_limit()
+                
+                c_name = ctx.command.name
+                if (retry_after and not is_owner) and not c_name == 'help':
+                    return await self._dispatch_cd(ctx, '⏰')
+                
+                self._warn_cd.get_bucket(ctx.message).reset()
+                
+                await ctx.command.invoke(ctx)
+                
+        except CommandError as exc:
+            
+            command_bucket.reset()    
+            self._clock_cd.get_bucket(ctx.message).reset()
+        
+            error_bucket = self._error_cd.get_bucket(ctx.message)
+            retry_after = error_bucket.update_rate_limit()
+            
+            if retry_after and not is_owner and not isinstance(exc, NotOwner):
+                return await self._dispatch_cd(ctx, '⚠️')
+            
+            await ctx.command.dispatch_error(ctx, exc)
+            
+        else:
+            self.dispatch('command_completion', ctx)
+
+    async def _dispatch_cd(self, ctx, cd_type: str):
+        """dispatches cds for clock and warns"""
+        if cd_type == '⏰':
+            clock_bucket = self._clock_cd.get_bucket(ctx.message)
+            retry_after = clock_bucket.update_rate_limit()
+            if not retry_after:
+                await ctx.add_reaction('⏰')
+
+        elif cd_type == '⚠️':
+            warn_bucket = self._warn_cd.get_bucket(ctx.message)
+            retry_after = warn_bucket.update_rate_limit()
+            if not retry_after:
+                await ctx.add_reaction('⚠️')
+                                        
     async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
@@ -94,7 +118,7 @@ class MioBot(AutoShardedBot):
     async def on_command_error(self, ctx, exception):
         """Overrides the default error handler"""
         error = getattr(exception, "original", exception)
-        if isinstance(error, (CommandNotFound, NotOwner)):
+        if isinstance(error, NotOwner):
             return
         
         e_args = (type(exception), exception, exception.__traceback__)
@@ -124,4 +148,3 @@ class MioBot(AutoShardedBot):
     def reload_extension(self, name):
         super().reload_extension(name)
         print(f"Reloaded extension : {name}\n{'-'*50}")
-    

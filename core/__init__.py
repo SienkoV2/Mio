@@ -26,5 +26,5 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from core.bot import *
-from core.ctx import *
+from core.bot import MioBot
+from core.ctx import NewCtx

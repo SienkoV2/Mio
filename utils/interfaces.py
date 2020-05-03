@@ -41,10 +41,11 @@ class Prompt(MioDisplay):
         """Stops running"""
         self.is_running = False
 
-# Paginator - 10 pages or more 
-class Paginator(Prompt):
-    """Used to show multiple pages"""
-    
+
+class Paginator(Prompt):  
+    """
+    6 pages or more
+    """
     @button(emoji='🔢', position=0)
     async def on_input_emoji(self, payload):
         msg = await self.channel.send('Which page do you want to see ?')
@@ -82,8 +83,11 @@ class Paginator(Prompt):
         """Last page"""
         await self.goto_index('LAST')
         
-# Shortpaginator (2 - 5) pages
+
 class ShortPaginator(MioDisplay):
+    """
+    From 1 to 5 pages
+    """
     def __init__(self, **options):
         super().__init__(**options)
         self.buttons = ('1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣')
@@ -96,7 +100,7 @@ class ShortPaginator(MioDisplay):
         
         while self.is_running:
             payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
-            if (emoji := getattr(payload, 'emoji', None)):
+            if (emoji:= getattr(payload, 'emoji', None)):
                 if str(emoji) == '⏹️':
                     self.is_running = False
                 else:
@@ -140,7 +144,7 @@ def autodetect(**options) -> Union[Prompt, ShortPaginator, Paginator]:
     max_len = max(len(contents), len(embeds))
     
     # should prolly switch to a for loop
-    kwargs = {'contents' : contents, 'embeds' : embeds}
+    kwargs = {'contents': contents, 'embeds': embeds}
     
     for max_size, Interface in [(1, Prompt), (5, ShortPaginator)]:
         if max_len <= max_size:

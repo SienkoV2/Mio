@@ -29,15 +29,19 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 from random import random, uniform
 from discord import Embed, Color
 
+
 class ColoredEmbed(Embed):
     """Haha yes"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.color = Color.from_hsv(random(), uniform(0.75, 0.95), 1)
+        self.color = self.random_color
         
-def chunker(to_chunk : list, chunk_size : int = 4):
+    @property
+    def random_color(self):
+        return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
+      
+        
+def chunker(to_chunk: list, chunk_size: int = 4):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(to_chunk), chunk_size):
         yield to_chunk[i:i + chunk_size]
-        
-        

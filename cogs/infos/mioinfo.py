@@ -42,7 +42,7 @@ class BotInfoCog(commands.Cog, name='infos'):
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
-        self._embed.color = self.bot.color
+        self._embed.color = ColoredEmbed.random_color
         await ctx.display(embed=self._embed)
     
     @commands.command(name='stats')
@@ -71,8 +71,8 @@ class BotInfoCog(commands.Cog, name='infos'):
             yield sum(1 for _ in container)
         
     def _bot_stats(self):
-        """Async iterators good"""
-        groups = filter(lambda c : isinstance(c, commands.Group), self.bot.walk_commands())
+        """Async iterators good"""        
+        groups = (c for c in self.bot.walk_commands() if isinstance(c, commands.Group))
         for container in (self.bot.cogs, groups, self.bot.walk_commands()):
             yield sum(1 for _ in container)
                                 
@@ -84,6 +84,7 @@ class BotInfoCog(commands.Cog, name='infos'):
         msg_with_embed = await channel.fetch_message(msg.id)
         await msg.delete()
         self._embed = msg_with_embed.embeds[0]
+        
         
 def setup(bot):
     bot.add_cog(BotInfoCog(bot))

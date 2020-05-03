@@ -26,17 +26,16 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from os import environ
-from sys import stderr
+
 from typing import Union
 from pathlib import Path
-from traceback import format_exception
-from typing import Tuple, List, Callable, Iterable
+from typing import Tuple, Callable, Iterable
 
 from discord.ext import commands
 
 from utils.formatters import ColoredEmbed, chunker
 from config import EXTENSION_LOADER_PATH
+
 
 class ExtensionLoadingCog(commands.Cog):
     def __init__(self, bot):
@@ -44,59 +43,63 @@ class ExtensionLoadingCog(commands.Cog):
         self.loop = bot.loop
         self.loop.create_task(self.extensions_load(None, None))
         
-    @commands.group(name='extensions', aliases=['ext'], invoke_without_command=True)
+    @commands.group(name='extensions', aliases=['ext'], 
+                    invoke_without_command=True)
     async def extensions_(self, ctx):
         """Extensions managing commands"""
         await ctx.send_help(ctx.command)
         
     @extensions_.command(name='load')
-    async def extensions_load(self, ctx, query : str = None):
+    async def extensions_load(self, ctx, query: str = None):
         """
         Loads all extensions matching the query
         """
-        report = await self.loop.run_in_executor(None,
-                                                 self._manage,
-                                                 query,
-                                                 self.bot.load_extension,
-                                                 self._get_ext_path(query))
+        args = (None, self._manage, query, 
+                self.bot.load_extension,
+                self._get_ext_path(query))
         
-        if ctx is None: # On bootup, execute this func with None everywhere
-            return [*report]
+        report = await self.loop.run_in_executor(*args)
+        
+        if ctx is None:  # On bootup, execute this func with None everywhere
+            return 
         
         await ctx.display(embeds=[*self._format('Loaded extensions', report)])
     
     @extensions_.command(name='reload', aliases=['re'])
-    async def extension_reload(self, ctx, query : str = None):
+    async def extension_reload(self, ctx, query: str = None):
         """
         Reloads all extensions matching the query
         """
-        report = await self.loop.run_in_executor(None,
-                                                 self._manage,
-                                                 query, 
-                                                 self.bot.reload_extension,
-                                                 (e for e in self.bot.extensions))
+        args = (None, self._manage, query, 
+                self.bot.reload_extension,
+                (e for e in self.bot.extensions))  # can't direcly copy it
+        
+        report = await self.loop.run_in_executor(*args)
 
         await ctx.display(embeds=[*self._format('Reloaded extensions', report)])
     
     @extensions_.command(name='unload', aliases=['un'])
-    async def extensions_unload(self, ctx, query : str = None):
+    async def extensions_unload(self, ctx, query: str = None):
         """
         Unloads all extensions matching the query 
         """
-        report = await self.loop.run_in_executor(None,
-                                                 self._manage,
-                                                 query,
-                                                 self.bot.reload_extension,
-                                                 (e for e in self.bot.extensions))
+        args = (None, self._manage, query, 
+                self.bot.reload_extension,
+                (e for e in self.bot.extensions))
         
-        await ctx.display(embeds=[*self._format('Unloaded extensions', report)])
+        report = await self.loop.run_in_executor(*args)  # pep8 plz
         
+        embeds = [*self._format('Unloaded extensions', report)]
+        await ctx.display(embeds=embeds)
         
     async def cog_before_invoke(self, ctx):
-        if not await self.bot.is_owner(ctx.author): # this error is silently discarded by the global eh
-            raise commands.NotOwner(message='You must own this bot to load extensions')
+        """Owner only cog"""
+        if not await self.bot.is_owner(ctx.author):  # silent error
+            message = 'You must own this bot to load extensions'
+            raise commands.NotOwner(message=message)
             
-    def _format(self, action : str, report : Iterable[Tuple[str, str]]) -> Iterable[ColoredEmbed]:
+    def _format(self, action: str, 
+                report: Iterable[Tuple[str, str]]) -> Iterable[ColoredEmbed]:
         """Formats embeds to show which extensions errored out"""        
         for chunk in chunker([*report]):
             embed = ColoredEmbed(title=action)
@@ -105,20 +108,21 @@ class ExtensionLoadingCog(commands.Cog):
                 
             yield embed
         
-    def _manage(self, 
-                query : Union[str, None], 
-                func : Callable,
-                iterable : Iterable) -> Iterable[Tuple[str, str]]:
-        """Loads / unloads extensions"""        
+    def _manage(self, query: Union[str, None], func: Callable, 
+                iterable: Iterable) -> Iterable[Tuple[str, str]]:
+        """Loads / reloads / unloads extensions"""        
+        report = []
         for ext in iterable:
             try:
                 func(ext)
             except Exception as e:
-                yield (ext, str(e))
+                report.append((ext, str(e)))
             else:
-                yield (ext, 'No error')
+                report.append((ext, 'No error'))
                 
-    def _get_ext_path(self, query : Union[str, None]) -> Iterable[Path]:
+        return report
+                     
+    def _get_ext_path(self, query: Union[str, None]) -> Iterable[Path]:
         """
         Gets all py files in the cogs folder
         that corresponds to the query
@@ -126,8 +130,10 @@ class ExtensionLoadingCog(commands.Cog):
         for file in Path('cogs').glob('**/*.py'):
             *tree, _ = file.parts
             if query in (tree + [None]):
-                if (ext := f"{'.'.join(tree)}.{file.stem}") != EXTENSION_LOADER_PATH:
+                ext = f"{'.'.join(tree)}.{file.stem}"
+                if ext != EXTENSION_LOADER_PATH:
                     yield ext
+
 
 def setup(bot):
     bot.add_cog(ExtensionLoadingCog(bot))
