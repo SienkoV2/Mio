@@ -26,7 +26,9 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
+
 from random import random, uniform
+
 from discord import Embed, Color
 
 

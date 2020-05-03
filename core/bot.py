@@ -31,7 +31,7 @@ from sys import stderr
 from traceback import print_exception, format_exception
 
 from discord.ext.commands import (AutoShardedBot, CooldownMapping, BucketType, 
-                                  UserInputError, CheckFailure,
+                                  UserInputError, CheckFailure, CommandOnCooldown,
                                   CommandError, NotOwner)
 
 from utils.formatters import ColoredEmbed
@@ -45,7 +45,7 @@ class MioBot(AutoShardedBot):
         self._setup_defaults()
 
         for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
-            cd_args = (1.0, GLOBAL_USER_COOLDOWN, BucketType.user)
+            cd_args = (2.0, GLOBAL_USER_COOLDOWN, BucketType.member)
             cd = CooldownMapping.from_cooldown(*cd_args)
             setattr(self, attr, cd)
 
@@ -123,10 +123,14 @@ class MioBot(AutoShardedBot):
         
         e_args = (type(exception), exception, exception.__traceback__)
         
-        if not isinstance(error, (UserInputError, CheckFailure)):
+        if not isinstance(error, (UserInputError, CheckFailure, CommandOnCooldown)):
             print_exception(*e_args, file=stderr)
         
-        if await self.is_owner(ctx.author):
+        is_owner = await self.is_owner(ctx.author)
+        if isinstance(error, CommandOnCooldown):
+            return await ctx.reinvoke()
+        
+        if is_owner:
             lines = ''.join(format_exception(*e_args, 4))
         else:
             lines = str(exception)

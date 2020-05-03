@@ -36,7 +36,7 @@ path = r'C:\\Program Files\\Tesseract-OCR\\tesseract.exe'
 pytesseract.pytesseract.tesseract_cmd = path
 
 
-class TokenReader(commands.Cog, name='admin'):
+class TokenReader(commands.Cog, name='Admin'):
     def __init__(self, bot):
         self.bot = bot
     

@@ -29,7 +29,7 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 from typing import Union, List
 
 import discord
-from discord.ext.commands import Converter, command, is_nsfw
+from discord.ext.commands import Converter, Cog, command, is_nsfw
 
 from nhentai.nhentai import Doujinshi
 from nhentai.nhentai import search as n_search
@@ -84,24 +84,10 @@ class PaginatorDoujinReader(Paginator, BaseDoujinReader):
         self.doujins = options.pop('doujins')
 
 
-class ShortPaginatorDoujinReader(ShortPaginator, BaseDoujinReader):
-    def __init__(self, **options):
-        super().__init__(**options)
-        self.original_embeds = self.embeds
-        self.doujins = options.pop('doujins')
-
-
-class PromptDoujinReader(Prompt, BaseDoujinReader):
-    def __init__(self, **options):
-        super().__init__(**options)
-        self.original_embeds = self.embeds
-        self.doujins = options.pop('doujins')
-
-
 # the actual cog
 
 
-class NhentaiReaderCog(commands.Cog, name='Nsfw'):
+class NhentaiReaderCog(Cog, name='Nsfw'):
     def __init__(self, bot):
         self.bot = bot  
         
@@ -109,22 +95,11 @@ class NhentaiReaderCog(commands.Cog, name='Nsfw'):
     @is_nsfw()
     async def nhentai_(self, ctx, query: DoujinshiConverter):
         if not (pages:= [*self._format_pages(query)]):
-            return await ctx.display(embed=ColoredEmbed(
-                                     title='No doujin found'))    
-       
-        kwargs = {'ctx': ctx, 
-                  'embeds ': [p async for p in self._format_pages(query)],
-                  'doujins': query}
-       
-        max_len = len(kwargs['embeds'])
-        for max_size, Interface in [(1, PromptDoujinReader), 
-                                    (5, ShortPaginatorDoujinReader)]:
-            if max_len <= max_size:
-                await Interface(**kwargs).run_until_complete()
+            return await ctx.display(embed=ColoredEmbed(title='No doujin found'))    
         else:
-            await PaginatorDoujinReader(**kwargs).run_until_complete()  
+            await PaginatorDoujinReader(ctx=ctx, embeds=pages, doujins=query).run_until_complete()  
        
-    async def _format_pages(self, results: List[Doujinshi]):
+    def _format_pages(self, results: List[Doujinshi]):
         for doujin in results:            
             embed = ColoredEmbed(title=f'{doujin.name} ({doujin.magic})',
                                  url=f'https://nhentai.net/g/{doujin.magic}')

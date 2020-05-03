@@ -43,13 +43,11 @@ def to_language(arg: str) -> Tuple[Union[str, None], str]:
     Returns:
         Tuple -- language if found else none + original
     """    
-    lang = None
     if (low:= arg.lower()) in LANGUAGES:
-        lang = arg
+        return arg
     else:
-        lang = LANGCODES.get(low)
-    return lang
-
+        return LANGCODES.get(low, None)
+ 
 
 class TranslatorCog(Cog, name='Practical'):
     def __init__(self, bot):

@@ -21,22 +21,26 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 """
+__title__ = 'Mio'
+__author__ = 'Saphielle-Akiyama'
+__license__ = 'MIT'
+__copyright__ = 'Copyright 2020 Saphielle-Akiyama'
+
 from typing import Iterator
 from asyncio import sleep
 
-
-from discord.ext import commands
+from discord.ext.commands import Cog, command
 
 from utils.formatters import ColoredEmbed
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class BotInfoCog(commands.Cog, name='infos'):        
+class BotInfoCog(Cog, name='Infos'):        
     def __init__(self, bot):
         self.bot = bot 
         self.bot.loop.create_task(self._fetch_github_embed())
     
-    @commands.command(name='source')
+    @command(name='source')
     async def source(self, ctx):
         """Show bot's source code"""
         await self.bot.wait_until_ready()
@@ -45,7 +49,7 @@ class BotInfoCog(commands.Cog, name='infos'):
         self._embed.color = ColoredEmbed().random_color
         await ctx.display(embed=self._embed)
     
-    @commands.command(name='stats')
+    @command(name='stats')
     async def stats(self, ctx):
         """Shows some stats about the bot"""
         guilds, channels, members = [*self._members_stats()]

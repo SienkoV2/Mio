@@ -36,6 +36,7 @@ from typing import List, Union, Tuple, Dict
 from discord.ext.commands import EmojiConverter, BadArgument
 from discord import RawReactionActionEvent, Embed, HTTPException, Message
 
+
 class MioDisplay:
     def __init__(self, **options):
         """
@@ -159,7 +160,6 @@ class MioDisplay:
         max_index, to_send = self.__formatter(self._index)
 
         new = perf_counter()
-        
         await async_sleep(self.cooldown - (new - self._last_pressed))
         self._last_pressed = new
 

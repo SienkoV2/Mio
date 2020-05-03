@@ -40,8 +40,8 @@ class Prompt(MioDisplay):
     async def on_stop_button(self, payload): 
         """Stops running"""
         self.is_running = False
-
-
+        
+        
 class Paginator(Prompt):  
     """
     6 pages or more

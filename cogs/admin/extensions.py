@@ -37,60 +37,65 @@ from utils.formatters import ColoredEmbed, chunker
 from config import EXTENSION_LOADER_PATH
 
 
-class ExtensionLoadingCog(commands.Cog):
+class ExtensionLoadingCog(commands.Cog, name='Admin'):
     def __init__(self, bot):
         self.bot = bot
         self.loop = bot.loop
         self.loop.create_task(self.extensions_load(None, None))
         
-    @commands.group(name='extensions', aliases=['ext'], 
+    @commands.group(name='extensions', aliases=['ext', '-e'], 
                     invoke_without_command=True)
     async def extensions_(self, ctx):
         """Extensions managing commands"""
         await ctx.send_help(ctx.command)
         
-    @extensions_.command(name='load')
+        
+    @extensions_.command(name='load', aliases=['-l'])
     async def extensions_load(self, ctx, query: str = None):
         """
         Loads all extensions matching the query
         """
-        args = (None, self._manage, query, 
-                self.bot.load_extension,
-                self._get_ext_path(query))
-        
-        report = await self.loop.run_in_executor(*args)
+        report = self._manage(query, self.bot.load_extension, 
+                              self._get_ext_path(query))
         
         if ctx is None:  # On bootup, execute this func with None everywhere
             return 
         
-        await ctx.display(embeds=[*self._format('Loaded extensions', report)])
-    
-    @extensions_.command(name='reload', aliases=['re'])
+        if (embeds:= [*self._format('Loaded extensions', report)]):
+            await ctx.display(embeds=embeds)
+        else:
+            await ctx.display(embed=ColoredEmbed(title="Couldn't find any matching extensions"))
+
+
+    @extensions_.command(name='reload', aliases=['re', '-r'])
     async def extension_reload(self, ctx, query: str = None):
         """
         Reloads all extensions matching the query
         """
-        args = (None, self._manage, query, 
-                self.bot.reload_extension,
-                (e for e in self.bot.extensions))  # can't direcly copy it
+        exts = [e for e in self.bot.extensions 
+                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))]
         
-        report = await self.loop.run_in_executor(*args)
-
-        await ctx.display(embeds=[*self._format('Reloaded extensions', report)])
-    
-    @extensions_.command(name='unload', aliases=['un'])
+        report = self._manage(query, self.bot.reload_extension, exts)
+        
+        if (embeds:= [*self._format('Reloaded extensions', report)]):
+            await ctx.display(embeds=embeds)
+        else:
+            await ctx.display(embed=ColoredEmbed(title="Couldn't find any matching extensions"))
+            
+    @extensions_.command(name='unload', aliases=['un', '-u'])
     async def extensions_unload(self, ctx, query: str = None):
         """
         Unloads all extensions matching the query 
-        """
-        args = (None, self._manage, query, 
-                self.bot.reload_extension,
-                (e for e in self.bot.extensions))
+        """        
+        exts = [e for e in self.bot.extensions 
+                if not {'jishaku', 'extensions'} & set(e.split('.'))]
         
-        report = await self.loop.run_in_executor(*args)  # pep8 plz
+        report = self._manage(query, self.bot.unload_extension, exts)
         
-        embeds = [*self._format('Unloaded extensions', report)]
-        await ctx.display(embeds=embeds)
+        if (embeds := [*self._format('Unloaded extensions', report)]):
+            await ctx.display(embeds=embeds)
+        else:
+            await ctx.display(embed=ColoredEmbed(title="Couldn't find any matching extensions"))
         
     async def cog_before_invoke(self, ctx):
         """Owner only cog"""
@@ -131,8 +136,7 @@ class ExtensionLoadingCog(commands.Cog):
             *tree, _ = file.parts
             if query in (tree + [None]):
                 ext = f"{'.'.join(tree)}.{file.stem}"
-                if ext != EXTENSION_LOADER_PATH:
-                    yield ext
+                yield ext
 
 
 def setup(bot):

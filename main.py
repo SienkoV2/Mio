@@ -27,8 +27,9 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from logging import basicConfig, WARNING
-from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
+
 from core import MioBot
+from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
 
 if __name__ == '__main__':    
     basicConfig(level=WARNING)
