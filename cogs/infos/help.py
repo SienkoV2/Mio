@@ -26,21 +26,21 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-import discord
-from discord.ext import commands
+
+from discord.ext.commands import (BucketType, Cog, Cooldown, Group,
+                                  MinimalHelpCommand)
 
 from utils.formatters import ColoredEmbed, chunker
 
 
-class MioHelpCommand(commands.MinimalHelpCommand):
+class MioHelpCommand(MinimalHelpCommand):
     def __init__(self):
         super().__init__(command_attrs={
             'help': 'Shows help about the bot, a command or a category',
-            'cooldown': commands.Cooldown(1.0, 15, commands.BucketType.member)})
+            'cooldown': Cooldown(1.0, 15, BucketType.member)})
         
     def get_command_signature(self, command):
         return '{0.clean_prefix}{1.qualified_name} {1.signature}'.format(self, command)
-        
         
     async def send_bot_help(self, mapping):
         await self.context.display(embeds=[e async for e in self._format_bot_help(mapping)],
@@ -88,7 +88,7 @@ class MioHelpCommand(commands.MinimalHelpCommand):
                 
                 command_names = []
                 for c in filtered_commands:
-                    if isinstance(c, commands.Group):
+                    if isinstance(c, Group):
                         command_names.append(f"`{c.name} [+{len(c.commands)}]`")
                     else:
                         command_names.append(f"`{c.name}`")
@@ -99,8 +99,9 @@ class MioHelpCommand(commands.MinimalHelpCommand):
                                     inline=False)
                 
             yield embed
+       
                 
-class HelpCommandCog(commands.Cog, name='Infos'):
+class HelpCommandCog(Cog, name='Infos'):
     def __init__(self, bot):
         self.bot = bot
         self._original_help_command = bot.help_command

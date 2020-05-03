@@ -47,7 +47,7 @@ def to_language(arg: str) -> Tuple[Union[str, None], str]:
         return arg
     else:
         return LANGCODES.get(low, None)
- 
+     
 
 class TranslatorCog(Cog, name='Practical'):
     def __init__(self, bot):
@@ -65,12 +65,18 @@ class TranslatorCog(Cog, name='Practical'):
         Translates a text from a language to english
         Will use the whole text if the language isn't provided
         """        
+        if len(text) >= 200:
+            raise TextTooLongError(message=f"This text is too long to be processed")
+        
         resp = await self.translator.translate(text, src=language or 'auto')
         await self._display(ctx, resp, text)
 
     @translate.command(name='to')
     async def translate_to(self, ctx, language: to_language, *, text: str):
         """Translates a text to another language"""
+        if len(text) >= 200:
+            raise TextTooLongError(message=f"This text is too long to be processed")
+        
         if language is None:
             raise LanguageNotFoundError(message=f"Couldn't find the language : {language}")
         
@@ -103,7 +109,11 @@ class TranslatorCog(Cog, name='Practical'):
                 
 class LanguageNotFoundError(CommandError):
     pass
+       
         
+class TextTooLongError(CommandError):
+    pass
+
         
 def setup(bot):
     bot.add_cog(TranslatorCog(bot))

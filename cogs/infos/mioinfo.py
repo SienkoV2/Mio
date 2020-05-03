@@ -29,7 +29,7 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 from typing import Iterator
 from asyncio import sleep
 
-from discord.ext.commands import Cog, command
+from discord.ext.commands import Cog, Group, command
 
 from utils.formatters import ColoredEmbed
 from config import BOOTUP_CHANNEL, GITHUB_LINK
@@ -76,7 +76,7 @@ class BotInfoCog(Cog, name='Infos'):
         
     def _bot_stats(self):
         """Async iterators good"""        
-        groups = (c for c in self.bot.walk_commands() if isinstance(c, commands.Group))
+        groups = (c for c in self.bot.walk_commands() if isinstance(c, Group))
         for container in (self.bot.cogs, groups, self.bot.walk_commands()):
             yield sum(1 for _ in container)
                                 

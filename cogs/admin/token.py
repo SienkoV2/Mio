@@ -61,5 +61,6 @@ class TokenReader(commands.Cog, name='Admin'):
         
         await ctx.send(text)
         
+        
 def setup(bot):
     bot.add_cog(TokenReader(bot))

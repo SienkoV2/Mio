@@ -28,7 +28,9 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 import discord
 from discord.ext.commands import Cog, command
+
 from utils.formatters import ColoredEmbed
+
 
 class SnipeCog(Cog, name='Fun'):
     def __init__(self, bot):
@@ -37,18 +39,18 @@ class SnipeCog(Cog, name='Fun'):
         
     async def _prepare_cache(self):
         await self.bot.wait_until_ready()   
-        self.snipes = {g.id : {} for g in self.bot.guilds}  
+        self.snipes = {g.id: {} for g in self.bot.guilds}  
 
-    @commands.Cog.listener()
+    @Cog.listener()
     async def on_guild_join(self, guild): 
         self.snipes[guild.id] = {}
         
-    @commands.Cog.listener()
+    @Cog.listener()
     async def on_guild_remove(self, guild): 
         self.snipes.pop(guild.id)
         
-    @commands.Cog.listener()
-    async def on_message_delete(self, msg : discord.Message):
+    @Cog.listener()
+    async def on_message_delete(self, msg: discord.Message):
         """Main listener"""
         await self.bot.wait_until_ready()
         if not msg.author.bot:
@@ -67,6 +69,5 @@ class SnipeCog(Cog, name='Fun'):
         await ctx.display(embed=embed)
         
         
-    
 def setup(bot):
     bot.add_cog(SnipeCog(bot))

@@ -31,41 +31,37 @@ from typing import Union
 from pathlib import Path
 from typing import Tuple, Callable, Iterable
 
-from discord.ext import commands
+from discord.ext.commands import Cog, NotOwner, group
 
 from utils.formatters import ColoredEmbed, chunker
 from config import EXTENSION_LOADER_PATH
 
 
-class ExtensionLoadingCog(commands.Cog, name='Admin'):
+class ExtensionLoadingCog(Cog, name='Admin'):
     def __init__(self, bot):
         self.bot = bot
         self.loop = bot.loop
         self.loop.create_task(self.extensions_load(None, None))
         
-    @commands.group(name='extensions', aliases=['ext', '-e'], 
-                    invoke_without_command=True)
+    @group(name='extensions', aliases=['ext', '-e'], invoke_without_command=True)
     async def extensions_(self, ctx):
         """Extensions managing commands"""
         await ctx.send_help(ctx.command)
-        
         
     @extensions_.command(name='load', aliases=['-l'])
     async def extensions_load(self, ctx, query: str = None):
         """
         Loads all extensions matching the query
         """
-        report = self._manage(query, self.bot.load_extension, 
-                              self._get_ext_path(query))
+        report = self._manage(self.bot.load_extension, self._get_ext_path(query))
         
         if ctx is None:  # On bootup, execute this func with None everywhere
-            return 
+            return [*report]
         
         if (embeds:= [*self._format('Loaded extensions', report)]):
             await ctx.display(embeds=embeds)
         else:
             await ctx.display(embed=ColoredEmbed(title="Couldn't find any matching extensions"))
-
 
     @extensions_.command(name='reload', aliases=['re', '-r'])
     async def extension_reload(self, ctx, query: str = None):
@@ -73,9 +69,10 @@ class ExtensionLoadingCog(commands.Cog, name='Admin'):
         Reloads all extensions matching the query
         """
         exts = [e for e in self.bot.extensions 
-                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))]
+                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))
+                and (query in e.split('.') + [None])]
         
-        report = self._manage(query, self.bot.reload_extension, exts)
+        report = self._manage(self.bot.reload_extension, exts)
         
         if (embeds:= [*self._format('Reloaded extensions', report)]):
             await ctx.display(embeds=embeds)
@@ -88,11 +85,12 @@ class ExtensionLoadingCog(commands.Cog, name='Admin'):
         Unloads all extensions matching the query 
         """        
         exts = [e for e in self.bot.extensions 
-                if not {'jishaku', 'extensions'} & set(e.split('.'))]
+                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))
+                and (query in e.split('.') + [None])]
         
-        report = self._manage(query, self.bot.unload_extension, exts)
+        report = self._manage(self.bot.unload_extension, exts)
         
-        if (embeds := [*self._format('Unloaded extensions', report)]):
+        if (embeds:= [*self._format('Unloaded extensions', report)]):
             await ctx.display(embeds=embeds)
         else:
             await ctx.display(embed=ColoredEmbed(title="Couldn't find any matching extensions"))
@@ -101,7 +99,7 @@ class ExtensionLoadingCog(commands.Cog, name='Admin'):
         """Owner only cog"""
         if not await self.bot.is_owner(ctx.author):  # silent error
             message = 'You must own this bot to load extensions'
-            raise commands.NotOwner(message=message)
+            raise NotOwner(message=message)
             
     def _format(self, action: str, 
                 report: Iterable[Tuple[str, str]]) -> Iterable[ColoredEmbed]:
@@ -113,20 +111,17 @@ class ExtensionLoadingCog(commands.Cog, name='Admin'):
                 
             yield embed
         
-    def _manage(self, query: Union[str, None], func: Callable, 
-                iterable: Iterable) -> Iterable[Tuple[str, str]]:
+    def _manage(self, func: Callable, iterable: Iterable) -> Iterable[Tuple[str, str]]:
         """Loads / reloads / unloads extensions"""        
         report = []
         for ext in iterable:
             try:
                 func(ext)
             except Exception as e:
-                report.append((ext, str(e)))
+                yield (ext, f"```py\n{e}```")
             else:
-                report.append((ext, 'No error'))
-                
-        return report
-                     
+                yield (ext, "```py\nNo error```")
+                    
     def _get_ext_path(self, query: Union[str, None]) -> Iterable[Path]:
         """
         Gets all py files in the cogs folder
@@ -141,8 +136,3 @@ class ExtensionLoadingCog(commands.Cog, name='Admin'):
 
 def setup(bot):
     bot.add_cog(ExtensionLoadingCog(bot))
-
-
-
-        
-    

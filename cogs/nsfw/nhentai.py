@@ -35,7 +35,7 @@ from nhentai.nhentai import Doujinshi
 from nhentai.nhentai import search as n_search
 
 from utils.formatters import ColoredEmbed
-from utils.interfaces import Paginator, ShortPaginator, Prompt, button
+from utils.interfaces import Paginator, button
 
 
 class DoujinshiConverter(Converter):

@@ -43,11 +43,12 @@ class MioDisplay:
         Base class that defines some helper functions
         """        
         # General context
+        self.is_running = True
         self.ctx = options.pop('ctx', None)
         self.bot = options.pop('bot', None) or self.ctx.bot
+        self.global_timeout = options.pop('global_timeout', None)
         self.loop = options.pop('loop', None) or self.ctx.bot.loop
         self.channel = options.pop('channel', None) or self.ctx.channel
-        self.is_running = True
         
         # Displayed stuff
         self.embed = options.pop('embed', None)
@@ -56,9 +57,9 @@ class MioDisplay:
         self.contents = options.pop('contents', []) or [self.content]
         
         # Wait for reaction / message            
+        self.cooldown = options.pop('cooldown', 2)
         self.author_only = options.pop('author_only', True)
-        self.timeout = options.pop('timeout', 30)
-        self.cooldown = options.pop('cooldown', 3)
+        self.wait_timeout = options.pop('wait_timeout', 30)
 
         # shouldn't be edited
         self._last_pressed = perf_counter() - self.cooldown
@@ -70,7 +71,9 @@ class MioDisplay:
         }   
 
     async def start(self):
-        """Only sends the initial message and adds reactions"""          
+        """Only sends the initial message and adds reactions"""   
+        self.loop.create_task(self.__global_timeout(self.global_timeout))
+               
         self._index, self._max_index, to_send = await self.__move_page(self._index)
         
         self.msg = await self.channel.send(**to_send)
@@ -107,7 +110,7 @@ class MioDisplay:
         """        
         payload, self._unable_to_delete = await self.wait_for_reaction(self._unable_to_delete)
         return await self.__dispatch(payload)
-       
+
     async def after(self):
         """To override, automatically called when it stops"""
         await self.msg.delete()   
@@ -207,7 +210,7 @@ class MioDisplay:
                          or not self.author_only 
                          and p.user_id != self.bot.user.id))
         
-        wf_kwargs = {'timeout': self.timeout, 
+        wf_kwargs = {'timeout': self.wait_timeout, 
                      'check': check}
         
         to_wait_for = [self.bot.wait_for('raw_reaction_add', **wf_kwargs)]
@@ -253,7 +256,7 @@ class MioDisplay:
         while self.is_running:
             
             try:
-                msg = await self.bot.wait_for('message', timeout=self.timeout, check=check)
+                msg = await self.bot.wait_for('message', timeout=self.wait_timeout, check=check)
                 
             except AsyncTimeoutError:
                 self.is_running = False
@@ -318,7 +321,14 @@ class MioDisplay:
         except HTTPException:
             pass
         
-            
+    async def __global_timeout(self, timeout: int):
+        if timeout is None:
+            return
+
+        await async_sleep(timeout)
+        self.is_running = False
+        
+        
 # helpers outside of the class
 def button(*, emoji: str, position: int):
     def decorator(func):

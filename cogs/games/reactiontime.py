@@ -26,5 +26,63 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-import discord
+from time import perf_counter
+
+from random import randint
+from random import choice as rng_choice
+
+from asyncio import sleep as async_sleep
+from asyncio import TimeoutError as AsyncTimeoutError
+
 from discord.ext import commands
+from utils.formatters import ColoredEmbed
+
+
+class ReactionTimeCog(commands.Cog, name='Games'):
+    def __init__(self, bot):
+        self.bot = bot
+        
+    @commands.command(name='reaction_time')
+    @commands.max_concurrency(1.0, commands.BucketType.channel)
+    async def reaction_time(self, ctx, min_delay: int = 3, max_delay: int = 6):
+        """Sends an embed and adds a random reaction"""
+        if min_delay > max_delay:
+            raise InvalidDelay(message=f'The minimal delay must be smaller than the maximum one')
+            
+        emoji = rng_choice(self.bot.emojis)
+
+        embed = ColoredEmbed(title='Reaction time game')
+
+        fields = [('minimum delay', f'{min_delay} seconds'),
+                  ('maximum delay', f'{max_delay} seconds'),
+                  ('emoji', str(emoji))]
+
+        for name, value in fields:
+            embed.add_field(name=name, value=value)
+
+        msg = await ctx.send(embed=embed)
+
+        await async_sleep(randint(min_delay, max_delay))
+
+        await msg.add_reaction(emoji)
+
+        def check(p):
+            return (p.channel_id == msg.channel.id 
+                    and p.message_id == msg.id
+                    and not p.member.bot)
+        try:
+            p = await self.bot.wait_for('raw_reaction_add', timeout=5, check=check)
+        except AsyncTimeoutError:
+            embed.add_field(name='Result', value='No one reacted on time', inline=False)
+        else:
+            embed.add_field(name='Result', value=f"{p.member.mention} won", inline=False)
+        finally:
+            await msg.edit(embed=embed)
+
+
+class InvalidDelay(commands.CommandError):
+    pass
+
+
+def setup(bot):
+    bot.add_cog(ReactionTimeCog(bot))
