@@ -34,16 +34,16 @@ from random import choice as rng_choice
 from asyncio import sleep as async_sleep
 from asyncio import TimeoutError as AsyncTimeoutError
 
-from discord.ext import commands
 from utils.formatters import ColoredEmbed
+from discord.ext.commands import command, Cog, max_concurrency, BucketType, CommandError
 
 
-class ReactionTimeCog(commands.Cog, name='Games'):
+class ReactionTimeCog(Cog, name='Games'):
     def __init__(self, bot):
         self.bot = bot
         
-    @commands.command(name='reaction_time')
-    @commands.max_concurrency(1.0, commands.BucketType.channel)
+    @command(name='reaction_time')
+    @max_concurrency(1.0, BucketType.channel)
     async def reaction_time(self, ctx, min_delay: int = 3, max_delay: int = 6):
         """Sends an embed and adds a random reaction"""
         if min_delay > max_delay:
@@ -80,7 +80,7 @@ class ReactionTimeCog(commands.Cog, name='Games'):
             await msg.edit(embed=embed)
 
 
-class InvalidDelay(commands.CommandError):
+class InvalidDelay(CommandError):
     pass
 
 

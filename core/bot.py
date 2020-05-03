@@ -73,7 +73,7 @@ class MioBot(AutoShardedBot):
                 command_bucket = self._command_cd.get_bucket(ctx.message)
                 retry_after = command_bucket.update_rate_limit()
                 
-                c_name = ctx.command.name
+                c_name = ctx.command.name  # help has a separate cooldowns
                 if (retry_after and not is_owner) and not c_name == 'help':
                     return await self._dispatch_cd(ctx, '⏰')
                 
@@ -89,8 +89,9 @@ class MioBot(AutoShardedBot):
             error_bucket = self._error_cd.get_bucket(ctx.message)
             retry_after = error_bucket.update_rate_limit()
             
+            # owner only commands are hidden 
             if retry_after and not is_owner and not isinstance(exc, NotOwner):
-                return await self._dispatch_cd(ctx, '⚠️')
+                return await self._dispatch_cd(ctx, '⚠️')  
             
             await ctx.command.dispatch_error(ctx, exc)
             
