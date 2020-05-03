@@ -45,7 +45,7 @@ class MioBot(AutoShardedBot):
         self._setup_defaults()
 
         for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
-            cd_args = (2.0, GLOBAL_USER_COOLDOWN, BucketType.member)
+            cd_args = (1.0, GLOBAL_USER_COOLDOWN, BucketType.member)
             cd = CooldownMapping.from_cooldown(*cd_args)
             setattr(self, attr, cd)
 

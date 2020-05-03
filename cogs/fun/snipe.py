@@ -53,7 +53,7 @@ class SnipeCog(Cog, name='Fun'):
     async def on_message_delete(self, msg: discord.Message):
         """Main listener"""
         await self.bot.wait_until_ready()
-        if not msg.author.bot:
+        if not msg.author.bot and len(msg.content) <= 200:
             self.snipes[msg.guild.id][msg.channel.id] = msg
         
     @command(name='snipe')
