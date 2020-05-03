@@ -143,7 +143,6 @@ def autodetect(**options) -> Union[Prompt, ShortPaginator, Paginator]:
         
     max_len = max(len(contents), len(embeds))
     
-    # should prolly switch to a for loop
     kwargs = {'contents': contents, 'embeds': embeds}
     
     for max_size, Interface in [(1, Prompt), (5, ShortPaginator)]:
