@@ -94,12 +94,12 @@ class NhentaiReaderCog(Cog, name='Nsfw'):
     @command(name='nhentai')
     @is_nsfw()
     async def nhentai_(self, ctx, query: DoujinshiConverter):
-        if not (pages:= [*self._format_pages(query)]):
+        if not (pages:= [p async for p in self._format_pages(query)]):
             return await ctx.display(embed=ColoredEmbed(title='No doujin found'))    
         else:
             await PaginatorDoujinReader(ctx=ctx, embeds=pages, doujins=query).run_until_complete()  
        
-    def _format_pages(self, results: List[Doujinshi]):
+    async def _format_pages(self, results: List[Doujinshi]):
         for doujin in results:            
             embed = ColoredEmbed(title=f'{doujin.name} ({doujin.magic})',
                                  url=f'https://nhentai.net/g/{doujin.magic}')

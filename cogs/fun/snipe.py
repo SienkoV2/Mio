@@ -27,10 +27,10 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 import discord
-from discord.ext import commands
+from discord.ext.commands import Cog, command
 from utils.formatters import ColoredEmbed
 
-class SnipeCog(commands.Cog, name='Fun'):
+class SnipeCog(Cog, name='Fun'):
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self._prepare_cache())
@@ -54,7 +54,7 @@ class SnipeCog(commands.Cog, name='Fun'):
         if not msg.author.bot:
             self.snipes[msg.guild.id][msg.channel.id] = msg
         
-    @commands.command(name='snipe')
+    @command(name='snipe')
     async def snipe(self, ctx):
         msg = self.snipes[ctx.guild.id].get(ctx.channel.id, None)
         if msg is None:
