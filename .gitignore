@@ -6,3 +6,4 @@ main.py
 
 *.pyc
 core/__pycache__/bot.cpython-38.pyc
+*.pyc
