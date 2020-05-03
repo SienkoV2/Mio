@@ -42,7 +42,7 @@ class BotInfoCog(commands.Cog, name='infos'):
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
-        self._embed.color = ColoredEmbed.random_color
+        self._embed.color = ColoredEmbed().random_color
         await ctx.display(embed=self._embed)
     
     @commands.command(name='stats')
