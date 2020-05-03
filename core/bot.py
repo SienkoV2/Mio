@@ -32,7 +32,7 @@ from traceback import print_exception, format_exception
 
 from discord.ext.commands import (AutoShardedBot, CooldownMapping, BucketType, 
                                   UserInputError, CheckFailure, CommandOnCooldown,
-                                  CommandError, NotOwner)
+                                  CommandError, NotOwner, MaxConcurrencyReached)
 
 from utils.formatters import ColoredEmbed
 from core.ctx import NewCtx
@@ -123,7 +123,7 @@ class MioBot(AutoShardedBot):
         
         e_args = (type(exception), exception, exception.__traceback__)
         
-        if not isinstance(error, (UserInputError, CheckFailure, CommandOnCooldown)):
+        if not isinstance(error, (UserInputError, CheckFailure, CommandOnCooldown, MaxConcurrencyReached)):
             print_exception(*e_args, file=stderr)
         
         is_owner = await self.is_owner(ctx.author)
