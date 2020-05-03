@@ -41,7 +41,7 @@ class CleverbotCog(Cog, name='Fun'):
         self.bot = bot
         self.cb_client = ac.Cleverbot(TRAVITIA_TOKEN)
         self.cb_client.set_context(ac.DictContext(self.cb_client))
-        self._cd = CooldownMapping.from_cooldown(1.0, 60.0, BucketType.member)
+        self._cd = CooldownMapping.from_cooldown(1.0, 5.0, BucketType.member)
         
     @Cog.listener()
     async def on_message(self, msg: Message):        
