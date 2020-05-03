@@ -47,7 +47,7 @@ class CleverbotCog(Cog, name='Fun'):
     async def on_message(self, msg: Message):        
         ctx = await self.bot.get_context(msg)
         
-        if (msg.author.bot or ctx.command
+        if (msg.author.bot or ctx.valid
             or not (self.bot.user.mentioned_in(msg) or msg.guild is None)
             or self._cd.get_bucket(msg).update_rate_limit()
             or msg.mention_everyone):
