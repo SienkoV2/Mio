@@ -4,3 +4,4 @@
 config/__init__.py
 main.py
 
+*.pyc
