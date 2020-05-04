@@ -45,14 +45,3 @@ class NewCtx(Context):
     async def display(self, **options):
         """Automatically detects which paginator to use"""
         return await autodetect(ctx=self, **options).run_until_complete()
-
-    async def emojis(self) -> Iterable[Union[Emoji, PartialEmoji]]:
-        """Finds all custom emojis"""
-        msg_txt = self.message.content
-        for emoji in findall(r'<a?:[a-zA-Z0-9\_]+:([0-9]+)>$', msg_txt):
-            try:
-                emoji = await EmojiConverter().convert(self, msg_txt)
-            except BadArgument:
-                emoji = await PartialEmojiConverter().convert(self, msg_txt)
-            finally:
-                yield emoji

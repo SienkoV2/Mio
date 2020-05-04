@@ -113,17 +113,7 @@ class ShortPaginator(MioDisplay):
         
 # Autodetection 
 def autodetect(**options) -> Union[Prompt, ShortPaginator, Paginator]:
-    """Autodetects whether to return a prompt or a paginator 
-
-    Arguments:
-        ctx {Context} -- commands.Context
-
-    Raises:
-        TypeError: If both (content and contents)  
-                   or (embed and embeds) are defined
-    Returns:
-        Union[Prompt, Paginator] -- Prompt or Paginator
-    """    
+    """Autodetects which interface to use"""    
     contents_embeds = []
     for singular, plural in [('content', 'contents'), ('embed', 'embeds')]:
         get_sing = options.pop(singular, [])
