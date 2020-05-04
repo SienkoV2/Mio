@@ -55,7 +55,7 @@ class CleverbotCog(Cog, name='Fun'):
         
         async with ctx.typing():
             
-            cb_ans = await self.cb_client.ask(msg.content[len(self.bot.user.mention):], 
+            cb_ans = await self.cb_client.ask(msg.content, 
                                               id_=msg.author.id, 
                                               emotion=rng_choice(tuple(ac.Emotion)))
         
