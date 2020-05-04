@@ -41,6 +41,7 @@ class CleverbotCog(Cog, name='Fun'):
         self.bot = bot
         self.cb_client = ac.Cleverbot(TRAVITIA_TOKEN)
         self.cb_client.set_context(ac.DictContext(self.cb_client))
+        self.cb_emotions = tuple(ac.Emotion)
         self._cd = CooldownMapping.from_cooldown(1.0, 5.0, BucketType.member)
         
     @Cog.listener()
@@ -48,15 +49,17 @@ class CleverbotCog(Cog, name='Fun'):
         ctx = await self.bot.get_context(msg)
         
         if (msg.author.bot or ctx.valid
-            or not (self.bot.user.mentioned_in(msg) or msg.guild is None)
-            or self._cd.get_bucket(msg).update_rate_limit() 
+            or not (self.bot.user.mentioned_in(msg) or msg.guild is None) 
             or msg.mention_everyone):
+            return
+        
+        if msg.guild and self._cd.get_bucket(msg).update_rate_limit():
             return
         
         async with ctx.typing():
             cb_ans = await self.cb_client.ask(msg.content, 
                                               id_=msg.author.id, 
-                                              emotion=rng_choice(tuple(ac.Emotion)))
+                                              emotion=rng_choice(self.cb_emotions))
         
         f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild else cb_ans.text
         await ctx.send(f_ans)

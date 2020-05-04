@@ -36,12 +36,13 @@ class ColoredEmbed(Embed):
     """Haha yes"""
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.color = self.random_color
-        
-    @property
-    def random_color(self):
-        return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
-     
+        self.color = random_color()
+
+
+def random_color():
+    """Returns a random pastel color"""
+    return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
+
 
 def chunker(to_chunk: list, chunk_size: int = 4):
     """Yield successive n-sized chunks from lst."""
