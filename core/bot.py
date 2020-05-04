@@ -45,7 +45,7 @@ class MioBot(AutoShardedBot):
         self._setup_defaults()
 
         for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
-            cd_args = (1.0, GLOBAL_USER_COOLDOWN, BucketType.member)
+            cd_args = (1, GLOBAL_USER_COOLDOWN, BucketType.member)
             cd = CooldownMapping.from_cooldown(*cd_args)
             setattr(self, attr, cd)
 
@@ -74,14 +74,16 @@ class MioBot(AutoShardedBot):
                 retry_after = command_bucket.update_rate_limit()
                 
                 c_name = ctx.command.name  # help has a separate cooldowns
-                if (retry_after and not is_owner) and not c_name == 'help':
+                print(c_name)
+                if retry_after and not is_owner and not c_name == 'help':
                     return await self._dispatch_cd(ctx, '⏰')
-                
-                self._warn_cd.get_bucket(ctx.message).reset()
                 
                 await ctx.command.invoke(ctx)
                 
         except CommandError as exc:
+            
+            if isinstance(exc, CommandOnCooldown):  # some commands have their own cd
+                return
             
             command_bucket.reset()    
             self._clock_cd.get_bucket(ctx.message).reset()

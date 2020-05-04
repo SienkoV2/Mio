@@ -37,7 +37,7 @@ class MioHelpCommand(MinimalHelpCommand):
     def __init__(self):
         super().__init__(command_attrs={
             'help': 'Shows help about the bot, a command or a category',
-            'cooldown': Cooldown(1.0, 15, BucketType.channel)})
+            'cooldown': Cooldown(1, 15, BucketType.channel)})
         
     def get_command_signature(self, command):
         return '{0.clean_prefix}{1.qualified_name} {1.signature}'.format(self, command)

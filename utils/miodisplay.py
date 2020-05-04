@@ -59,7 +59,7 @@ class MioDisplay:
         # Wait for reaction / message            
         self.cooldown = options.pop('cooldown', 2)
         self.author_only = options.pop('author_only', True)
-        self.wait_timeout = options.pop('wait_timeout', 30)
+        self.wait_timeout = options.pop('wait_timeout', 15)
 
         # shouldn't be edited
         self._last_pressed = perf_counter() - self.cooldown
