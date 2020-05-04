@@ -26,7 +26,7 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from random import choice
+from random import choice as rng_choice
 
 from discord import Message
 from discord.ext.commands import Cog, CooldownMapping, BucketType
@@ -49,7 +49,7 @@ class CleverbotCog(Cog, name='Fun'):
         
         if (msg.author.bot or ctx.valid
             or not (self.bot.user.mentioned_in(msg) or msg.guild is None)
-            or self._cd.get_bucket(msg).update_rate_limit()
+            or self._cd.get_bucket(msg).update_rate_limit() 
             or msg.mention_everyone):
             return
         
@@ -57,7 +57,7 @@ class CleverbotCog(Cog, name='Fun'):
             
             cb_ans = await self.cb_client.ask(msg.content[len(self.bot.user.mention):], 
                                               id_=msg.author.id, 
-                                              emotion=choice(tuple(ac.Emotion)))
+                                              emotion=rng_choice(tuple(ac.Emotion)))
         
         f_ans = f"{ctx.author.mention} {cb_ans.text}" if ctx.guild else cb_ans.text
         await ctx.send(f_ans)
