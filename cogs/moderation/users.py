@@ -34,6 +34,37 @@ class UserModerationCog(commands.Cog, name='Moderation'):
     def __init__(self, bot):
         self.bot = bot
         
+    @commands.commands(name='kick')
+    @commands.has_guild_permissions(kick_members=True)
+    @commands.bot_has_permissions(kick_members=True)
+    async def kick(self, ctx, members: commands.Greedy[discord.Member], reason: str = None):
+        for member in members:
+            try:
+                await member.ban(reason=reason)
+            except discord.HTTPException:
+                pass
+            
+    @commands.command(name='ban')
+    @commands.has_guild_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def ban(self, ctx, members: commands.Greedy[discord.Member], reason: str = None, delete_message_days: int = 1):
+        for member in members:
+            try:
+                await member.ban(reason=reason, delete_message_days=delete_message_days)
+            except discord.HTTPException:
+                pass
+    
+    @commands.commands(name='unban') 
+    @commands.has_guild_permissions(ban_members=True)
+    @commands.bot_has_permissions(ban_members=True)
+    async def unban(self, ctx, members: commands.Greedy[discord.Member], reason: str = None):
+        for member in members:
+            try:
+                await member.ban(reason=reason)
+            except discord.HTTPException:
+                pass
+           
+        
         
 def setup(bot):
     bot.add_cog(UserModerationCog(bot))

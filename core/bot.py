@@ -27,32 +27,29 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from os import environ
-from sys import stderr
+from asyncio import all_tasks
+from aiohttp import ClientSession as AioClientSession
 from traceback import print_exception, format_exception
 
+from discord import HTTPException, ClientException
 from discord.ext.commands import (AutoShardedBot, CooldownMapping, BucketType, 
-                                  UserInputError, CheckFailure, CommandOnCooldown,
-                                  CommandError, NotOwner, MaxConcurrencyReached)
+                                  CommandOnCooldown, CommandError)
 
-from utils.formatters import ColoredEmbed
 from core.ctx import NewCtx
+from utils.formatters import ColoredEmbed
 from config import GLOBAL_USER_COOLDOWN, EXTENSION_LOADER_PATH
 
 
 class MioBot(AutoShardedBot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._setup_defaults()
-
-        for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
-            cd_args = (1, GLOBAL_USER_COOLDOWN, BucketType.member)
-            cd = CooldownMapping.from_cooldown(*cd_args)
-            setattr(self, attr, cd)
-
-    # bootup
-    def _setup_defaults(self):
-        """Loads Jishaku and the extension loader"""
+        
         print('-' * 50)
+        self.session = AioClientSession()
+        
+        for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
+            setattr(self, attr, CooldownMapping.from_cooldown(1, GLOBAL_USER_COOLDOWN, BucketType.member))
+
         for env in ('JISHAKU_NO_UNDERSCORE', 'JISHAKU_NO_UNDERSCORE'):
             environ[env] = 'true'
 
@@ -61,22 +58,16 @@ class MioBot(AutoShardedBot):
             
     # anti spam
     async def invoke(self, ctx):
-        if ctx.command is None:
+        if ctx.command is None or not await self.can_run(ctx, call_once=True):
             return
-        
         self.dispatch('command', ctx)
-        try:
-            if await self.can_run(ctx, call_once=True):
-                
-                is_owner = await self.is_owner(ctx.author)
-                
-                command_bucket = self._command_cd.get_bucket(ctx.message)
-                retry_after = command_bucket.update_rate_limit()
-                
-                if retry_after and not is_owner:
-                    return self.dispatch('global_cooldown', ctx, '_clock_cd', '⏰')
-                
-                await ctx.command.invoke(ctx)
+        try:            
+            command_bucket = self._command_cd.get_bucket(ctx.message)
+    
+            if command_bucket.update_rate_limit() and not ctx.is_owner():
+                return self.dispatch('global_cooldown', ctx, '_clock_cd', '⏰')
+            
+            await ctx.command.invoke(ctx)
                 
         except CommandError as exc:
             
@@ -84,31 +75,42 @@ class MioBot(AutoShardedBot):
             
             self._clock_cd.get_bucket(ctx.message).reset()
             
-            retry_after = self._error_cd.get_bucket(ctx.message).update_rate_limit()
-            
-            # owner only commands are hidden 
-            if retry_after and not is_owner and not isinstance(exc, NotOwner):
-                return self.dispatch('global_cooldown', ctx, '_warn_cd', '⚠️')  
-            
             await ctx.command.dispatch_error(ctx, exc)
             
         else:
             self.dispatch('command_completion', ctx)
-
+            
     async def on_global_cooldown(self, ctx, cd_name: str, emoji: str):
         """dispatches cds for clock and warns"""
         if not getattr(self, cd_name).get_bucket(ctx.message).update_rate_limit():
             await ctx.add_reaction(emoji)
-
-
-                                        
     
     async def on_command_error(self, ctx, error):
         """Overrides the default error handler"""
+        if self._error_cd.get_bucket(ctx.message).update_rate_limit():
+            return self.dispatch('global_cooldown', ctx, '_warn_cd', '⚠️')  
+        
         error = getattr(error, 'original', error)
         
-        await ctx.display(content=error)
-                            
+        is_owner = await ctx.is_owner()
+        e_args = (type(error), error, error.__traceback__, 4)  
+        
+        if not isinstance(error, (HTTPException, ClientException)):
+            print_exception(*e_args)
+                
+        # Cooldown bypass 
+        if (isinstance(error, CommandOnCooldown)  # there must be a better way
+            and (is_owner or ctx.permissions_for(ctx.author).manage_messages)):
+            return await ctx.reinvoke()
+        
+        if is_owner:
+            lines = ''.join(format_exception(*e_args))        
+        else:
+            lines = str(error)
+        
+        await ctx.display(embed=ColoredEmbed(title='Error',
+                                             description='```py\n' + lines + '```'))
+        
     # Custom context
     async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
@@ -126,3 +128,11 @@ class MioBot(AutoShardedBot):
     def reload_extension(self, name):
         super().reload_extension(name)
         print(f"Reloaded extension : {name}\n{'-'*50}")
+        
+    # close the bot properly 
+    async def close(self):
+        for task in all_tasks(loop=self.loop):
+            await task.cancel()
+        self.session.close()
+        return super().close()
+    

@@ -26,19 +26,13 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-
-from re import findall
-from typing import Iterable, Union
-
-from discord import Emoji, PartialEmoji
-from discord.ext.commands import (EmojiConverter, PartialEmojiConverter, 
-                                  BadArgument, Context)
+from discord.ext.commands import Context
 
 from utils.interfaces import autodetect
 
 
 class NewCtx(Context):
-    async def add_reaction(self, emoji):
+    async def add_reaction(self, emoji): 
         """Adds an emoji to the original message"""
         await self.message.add_reaction(emoji)
 
