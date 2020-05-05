@@ -33,6 +33,8 @@ from utils.formatters import ColoredEmbed
 
 
 class SnipeCog(Cog, name='Fun'):
+    __slots__ = ('bot', 'snipes')
+    
     def __init__(self, bot):
         self.bot = bot
         bot.loop.create_task(self._prepare_cache())

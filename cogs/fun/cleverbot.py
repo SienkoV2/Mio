@@ -37,6 +37,8 @@ from config import TRAVITIA_TOKEN
 
 
 class CleverbotCog(Cog, name='Fun'):
+    __slots__ = ('bot', 'cb_client', 'cb_emotions', '_cd')
+    
     def __init__(self, bot):
         self.bot = bot
         self.cb_client = ac.Cleverbot(TRAVITIA_TOKEN)

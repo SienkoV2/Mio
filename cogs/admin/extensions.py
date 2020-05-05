@@ -38,10 +38,11 @@ from config import EXTENSION_LOADER_PATH
 
 
 class ExtensionLoadingCog(Cog, name='Admin'):
+    __slots__ = ('bot',)
+    
     def __init__(self, bot):
         self.bot = bot
-        self.loop = bot.loop
-        self.loop.create_task(self.extensions_load(None, None))
+        self.bot.loop.create_task(self.extensions_load(None, None))
         
     @group(name='extensions', aliases=['ext', '-e'], invoke_without_command=True)
     async def extensions_(self, ctx):
@@ -64,7 +65,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         report = self._manage(self.bot.load_extension, self._get_ext_path(query))
         
         if ctx is None:  # On bootup, execute this func with None everywhere
-            return [*report]
+            return print(*report, sep='\n')
         
         if (embeds:= [*self._format('Loaded extensions', report)]):
             await ctx.display(embeds=embeds)
@@ -90,7 +91,9 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         """
         Unloads all extensions matching the query 
         """        
-        exts = [e for e in self.bot.extensions if not {'jishaku', EXTENSION_LOADER_PATH.split('.')} & set(e.split('.')) and (query in e.split('.') + [None])]
+        exts = [e for e in self.bot.extensions 
+                if not {'jishaku', EXTENSION_LOADER_PATH.split('.')} & set(e.split('.')) 
+                and (query in e.split('.') + [None])]
         
         report = self._manage(self.bot.unload_extension, exts)
         
@@ -111,7 +114,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         for chunk in chunker([*report]):
             embed = ColoredEmbed(title=action)
             for cog, message in chunk:
-                embed.add_field(name=cog, value=message, inline=False)
+                embed.add_field(name=cog, value=f"```py\n{message}```", inline=False)
                 
             yield embed
         
@@ -122,9 +125,9 @@ class ExtensionLoadingCog(Cog, name='Admin'):
             try:
                 func(ext)
             except Exception as e:
-                yield (ext, f"```py\n{e}```")
+                yield (ext, str(e))
             else:
-                yield (ext, "```py\nNo error```")
+                yield (ext,'No error')
                     
     def _get_ext_path(self, query: Union[str, None]) -> Iterable[Path]:
         """

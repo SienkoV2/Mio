@@ -88,6 +88,8 @@ class PaginatorDoujinReader(Paginator, BaseDoujinReader):
 
 
 class NhentaiReaderCog(Cog, name='Nsfw'):
+    __slots__ = ('bot',)
+    
     def __init__(self, bot):
         self.bot = bot  
         

@@ -35,7 +35,9 @@ from utils.formatters import ColoredEmbed, random_color
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
-class BotInfoCog(Cog, name='Infos'):        
+class BotInfoCog(Cog, name='Infos'):   
+    __slots__ = ('bot', '_embed')
+         
     def __init__(self, bot):
         self.bot = bot 
         self.bot.loop.create_task(self._fetch_github_embed())
@@ -45,7 +47,8 @@ class BotInfoCog(Cog, name='Infos'):
         """Show bot's source code"""
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
-        await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
+        await owner.send(f'{ctx.author} used the source command in {ctx.channel.mention},' 
+                         'hope that he gave a star')
         self._embed.color = random_color()
         await ctx.display(embed=self._embed)
     
@@ -70,8 +73,7 @@ class BotInfoCog(Cog, name='Infos'):
     
     def _members_stats(self) -> Iterator[int]:
         """Async iterators good"""
-        bot = self.bot
-        for container in (bot.guilds, bot.get_all_channels(), bot.get_all_members()):
+        for container in (self.bot.guilds, self.bot.get_all_channels(), self.bot.get_all_members()):
             yield sum(1 for _ in container)
         
     def _bot_stats(self):

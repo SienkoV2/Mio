@@ -41,6 +41,8 @@ from utils.formatters import ColoredEmbed
 
 
 class ReactionTimeCog(Cog, name='Games'):
+    __slots__ = ('bot',)
+    
     def __init__(self, bot):
         self.bot = bot
         

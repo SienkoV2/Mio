@@ -102,6 +102,8 @@ class MioHelpCommand(MinimalHelpCommand):
        
                 
 class HelpCommandCog(Cog, name='Infos'):
+    __slots__ = ('bot', '_original_help_command')
+    
     def __init__(self, bot):
         self.bot = bot
         self._original_help_command = bot.help_command

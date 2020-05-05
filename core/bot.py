@@ -55,11 +55,7 @@ class MioBot(AutoShardedBot):
 
         for ext in ('jishaku', EXTENSION_LOADER_PATH):
             self.load_extension(ext)    
-            
-    async def on_ready(self):
-        print(self.user)
-            
-            
+                    
     # anti spam
     async def invoke(self, ctx):
         if ctx.command is None or not await self.can_run(ctx, call_once=True):
@@ -68,7 +64,7 @@ class MioBot(AutoShardedBot):
         try:            
             command_bucket = self._command_cd.get_bucket(ctx.message)
     
-            if command_bucket.update_rate_limit() and not ctx.is_owner():
+            if command_bucket.update_rate_limit() and not await ctx.is_owner():
                 return self.dispatch('global_cooldown', ctx, '_clock_cd', '⏰')
             
             await ctx.command.invoke(ctx)
@@ -119,20 +115,7 @@ class MioBot(AutoShardedBot):
     async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
-    
-    # Log stuff
-    def load_extension(self, name):
-        super().load_extension(name)
-        print(f"Loaded extension : {name}\n{'-'*50}")
-        
-    def unload_extension(self, name):
-        super().unload_extension(name)
-        print(f"Unloaded extention : {name}\n{'-'*50}")
-                
-    def reload_extension(self, name):
-        super().reload_extension(name)
-        print(f"Reloaded extension : {name}\n{'-'*50}")
-        
+            
     # close the bot properly 
     async def close(self):
         for task in all_tasks(loop=self.loop):
