@@ -39,6 +39,7 @@ pytesseract.pytesseract.tesseract_cmd = path
 class TokenReader(commands.Cog, name='Admin'):
     def __init__(self, bot):
         self.bot = bot
+        self.regex = r'([a-zA-Z0-9]{24}\.[a-zA-Z0-9]{6}\.[a-zA-Z0-9_\-]{27}|mfa\.[a-zA-Z0-9_\-]{84})'
     
     def extract_from_img(self, filename: str):
         img = cv2.imread(filename)
@@ -61,6 +62,31 @@ class TokenReader(commands.Cog, name='Admin'):
         
         await ctx.send(text)
         
+        
+class WarnClient(discord.Client):
+    def __init__(self, loop):
+        super().__init__(loop=loop)
+        self.warned = 0
+        self.text = ('**You or someone in your team leaked your token !**\n'
+                     'Please use https://discordapp.com/developers/applications/ '
+                     'to reset it')
+        
+    async def on_ready(self):
+        appinfo = await self.application_info()
+        self.owner = appinfo.owner
+        for _ in range(5):
+            await appinfo.owner.send('**You or someone in your team leaked your token !**\n'
+                                     'Please use https://discordapp.com/developers/applications/ '
+                                     'to reset it')
+    
+        if appinfo.team:
+            self.team = appinfo.team.members
+            for member in appinfo.team.members:
+                await appinfo.owner.send()
+                        
+        
+    
+    
         
 def setup(bot):
     bot.add_cog(TokenReader(bot))

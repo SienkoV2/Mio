@@ -31,7 +31,7 @@ from asyncio import sleep
 
 from discord.ext.commands import Cog, Group, command
 
-from utils.formatters import ColoredEmbed
+from utils.formatters import ColoredEmbed, random_color
 from config import BOOTUP_CHANNEL, GITHUB_LINK
 
 
@@ -46,7 +46,7 @@ class BotInfoCog(Cog, name='Infos'):
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command, hope that he gave a star')
-        self._embed.color = ColoredEmbed().random_color
+        self._embed.color = random_color()
         await ctx.display(embed=self._embed)
     
     @command(name='stats')
@@ -86,7 +86,7 @@ class BotInfoCog(Cog, name='Infos'):
         msg = await channel.send(GITHUB_LINK)
         await sleep(2)
         msg_with_embed = await channel.fetch_message(msg.id)
-        await msg.delete()
+        await msg.delete()  # it just reformats it in a nice way for some reason
         self._embed = msg_with_embed.embeds[0]
         
         

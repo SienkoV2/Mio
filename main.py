@@ -34,3 +34,6 @@ from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
 if __name__ == '__main__':    
     basicConfig(level=WARNING)
     MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
+
+
+

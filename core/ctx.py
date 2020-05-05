@@ -42,6 +42,14 @@ class NewCtx(Context):
         """Adds an emoji to the original message"""
         await self.message.add_reaction(emoji)
 
+    def permissions_for(self, member):
+        """Shortcut"""
+        return self.channel.permissions_for(member)
+    
     async def display(self, **options):
         """Automatically detects which paginator to use"""
         return await autodetect(ctx=self, **options).run_until_complete()
+    
+    async def is_owner(self) -> bool:
+        """Returns a bool saying whether an user is the owner or not"""
+        return await self.bot.is_owner(self.author)

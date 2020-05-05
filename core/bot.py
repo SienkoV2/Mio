@@ -73,76 +73,47 @@ class MioBot(AutoShardedBot):
                 command_bucket = self._command_cd.get_bucket(ctx.message)
                 retry_after = command_bucket.update_rate_limit()
                 
-                c_name = ctx.command.name  # help has a separate cooldowns
-                print(c_name)
-                if retry_after and not is_owner and not c_name == 'help':
-                    return await self._dispatch_cd(ctx, '⏰')
+                if retry_after and not is_owner:
+                    return self.dispatch('global_cooldown', ctx, '_clock_cd', '⏰')
                 
                 await ctx.command.invoke(ctx)
                 
         except CommandError as exc:
             
-            if isinstance(exc, CommandOnCooldown):  # some commands have their own cd
-                return
-            
             command_bucket.reset()    
+            
             self._clock_cd.get_bucket(ctx.message).reset()
-        
-            error_bucket = self._error_cd.get_bucket(ctx.message)
-            retry_after = error_bucket.update_rate_limit()
+            
+            retry_after = self._error_cd.get_bucket(ctx.message).update_rate_limit()
             
             # owner only commands are hidden 
             if retry_after and not is_owner and not isinstance(exc, NotOwner):
-                return await self._dispatch_cd(ctx, '⚠️')  
+                return self.dispatch('global_cooldown', ctx, '_warn_cd', '⚠️')  
             
             await ctx.command.dispatch_error(ctx, exc)
             
         else:
             self.dispatch('command_completion', ctx)
 
-    async def _dispatch_cd(self, ctx, cd_type: str):
+    async def on_global_cooldown(self, ctx, cd_name: str, emoji: str):
         """dispatches cds for clock and warns"""
-        if cd_type == '⏰':
-            clock_bucket = self._clock_cd.get_bucket(ctx.message)
-            retry_after = clock_bucket.update_rate_limit()
-            if not retry_after:
-                await ctx.add_reaction('⏰')
+        if not getattr(self, cd_name).get_bucket(ctx.message).update_rate_limit():
+            await ctx.add_reaction(emoji)
 
-        elif cd_type == '⚠️':
-            warn_bucket = self._warn_cd.get_bucket(ctx.message)
-            retry_after = warn_bucket.update_rate_limit()
-            if not retry_after:
-                await ctx.add_reaction('⚠️')
+
                                         
+    
+    async def on_command_error(self, ctx, error):
+        """Overrides the default error handler"""
+        error = getattr(error, 'original', error)
+        
+        await ctx.display(content=error)
+                            
+    # Custom context
     async def get_context(self, message, *, cls=NewCtx):
         """Overrides the default Ctx"""
         return await super().get_context(message, cls=cls)
     
-    async def on_command_error(self, ctx, exception):
-        """Overrides the default error handler"""
-        error = getattr(exception, "original", exception)
-        if isinstance(error, NotOwner):
-            return
-        
-        e_args = (type(exception), exception, exception.__traceback__)
-        
-        if not isinstance(error, (UserInputError, CheckFailure, CommandOnCooldown, MaxConcurrencyReached)):
-            print_exception(*e_args, file=stderr)
-        
-        is_owner = await self.is_owner(ctx.author)
-        if isinstance(error, CommandOnCooldown):
-            return await ctx.reinvoke()
-        
-        if is_owner:
-            lines = ''.join(format_exception(*e_args, 4))
-        else:
-            lines = str(exception)
-        
-        embed = ColoredEmbed(title=f'Error : {type(exception).__name__}',
-                             description=f"```py\n{lines}```")
-        
-        await ctx.display(embed=embed)
-                            
     # Log stuff
     def load_extension(self, name):
         super().load_extension(name)

@@ -46,7 +46,15 @@ class ExtensionLoadingCog(Cog, name='Admin'):
     @group(name='extensions', aliases=['ext', '-e'], invoke_without_command=True)
     async def extensions_(self, ctx):
         """Extensions managing commands"""
-        await ctx.send_help(ctx.command)
+        embeds = []
+        for chunk in chunker([v for v in self.bot.cogs.values()]):
+            embed = ColoredEmbed(title=f"{self.bot.user}'s cogs")
+            for cog in chunk:
+                f_value = f"{len(cog.get_commands())} command(s), {len(cog.get_listeners())} listener(s)"
+                embed.add_field(name=cog.qualified_name, value=f_value, inline=False)
+            embeds.append(embed)
+            
+        await ctx.display(embeds=embeds)
         
     @extensions_.command(name='load', aliases=['-l'])
     async def extensions_load(self, ctx, query: str = None):
@@ -68,9 +76,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         """
         Reloads all extensions matching the query
         """
-        exts = [e for e in self.bot.extensions 
-                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))
-                and (query in e.split('.') + [None])]
+        exts = [e for e in self.bot.extensions if query in e.split('.') + [None]]
         
         report = self._manage(self.bot.reload_extension, exts)
         
@@ -84,9 +90,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         """
         Unloads all extensions matching the query 
         """        
-        exts = [e for e in self.bot.extensions 
-                if not {'jishaku', EXTENSION_LOADER_PATH} & set(e.split('.'))
-                and (query in e.split('.') + [None])]
+        exts = [e for e in self.bot.extensions if not {'jishaku', EXTENSION_LOADER_PATH.split('.')} & set(e.split('.')) and (query in e.split('.') + [None])]
         
         report = self._manage(self.bot.unload_extension, exts)
         
@@ -130,8 +134,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         for file in Path('cogs').glob('**/*.py'):
             *tree, _ = file.parts
             if query in (tree + [None]):
-                ext = f"{'.'.join(tree)}.{file.stem}"
-                yield ext
+                yield f"{'.'.join(tree)}.{file.stem}"
 
 
 def setup(bot):
