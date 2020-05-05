@@ -117,11 +117,7 @@ class TokenReader(commands.Cog, name='Admin'):
         if msg.embeds:
             return
         
-        for embed in msg.embeds:
-            if embed.type != 'image':
-                continue
-            
-            bytes_img = await 
+
             
         
         
