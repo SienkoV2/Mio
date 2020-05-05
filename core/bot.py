@@ -56,6 +56,10 @@ class MioBot(AutoShardedBot):
         for ext in ('jishaku', EXTENSION_LOADER_PATH):
             self.load_extension(ext)    
             
+    async def on_ready(self):
+        print(self.user)
+            
+            
     # anti spam
     async def invoke(self, ctx):
         if ctx.command is None or not await self.can_run(ctx, call_once=True):
