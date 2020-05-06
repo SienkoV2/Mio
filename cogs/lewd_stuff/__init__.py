@@ -28,15 +28,12 @@ __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from typing import Union, List, Optional
 
-import discord
 from discord.ext.commands import Converter, Cog, command, is_nsfw
-
-from humanize import naturaldate
 
 from nhentai.nhentai import Doujinshi
 from nhentai.nhentai import search as n_search
 
-import rule34
+from rule34 import Rule34 as Rule34Client
 
 from utils.formatters import ColoredEmbed
 from utils.interfaces import Paginator, button
@@ -44,6 +41,7 @@ from utils.interfaces import Paginator, button
 
 #! Nhentai 
         
+
 class DoujinshiConverter(Converter):
     __slots__ = tuple()
     
@@ -112,7 +110,8 @@ async def format_nhentai_pages(results: List[Doujinshi]):
     
 #! Rule34
 
-class Rule34Client(rule34.Rule34):
+
+class SubRule34Client(Rule34Client):
     """Subclassed the client to avoid creating a new session everytime"""
     def __init__(self, bot, timeout=10):
         self.timeout = timeout
@@ -125,7 +124,7 @@ async def format_r34_images(r34posts: List[str]):
     for post in r34posts:
         embed = ColoredEmbed(title=f"Author's id : {post.creator_ID}", url=post.file_url)
         embed.set_image(url=post.file_url)
-        fields = (('Created at', naturaldate(post.created_at)),
+        fields = (('Created at', post.created_at),
                   ('Resolution', f"{post.width} x {post.height}"))
         for name, value in fields:
             embed.add_field(name=name, value=value)
@@ -133,12 +132,16 @@ async def format_r34_images(r34posts: List[str]):
         yield embed
 
 
+#! Cog
+
+
 class NsfwCog(Cog, name='Nsfw'):
     def __init__(self, bot):
         self.bot = bot
-        self.r34client = Rule34Client(bot)
+        self.r34client = SubRule34Client(bot)
         
     @command(name='nhentai')
+    @is_nsfw()
     async def nhentai_(self, ctx, query: DoujinshiConverter):
         """Looks for a nhentai doujin, per index or per name and displays it"""
         if not (pages:= [p async for p in format_nhentai_pages(query)]):
@@ -147,6 +150,7 @@ class NsfwCog(Cog, name='Nsfw'):
             await PaginatorDoujinReader(ctx=ctx, embeds=pages, doujins=query).run_until_complete()  
 
     @command(name='rule34', aliases=['r34'])
+    @is_nsfw()
     async def rule34_(self, ctx, fuzzy: Optional[bool] = True, *, query: str):
         if not (r34posts:= await self.r34client.getImages(singlePage=True, randomPID=True, 
                                                           tags=query, fuzzy=fuzzy)):
@@ -154,19 +158,6 @@ class NsfwCog(Cog, name='Nsfw'):
         else:
             await ctx.display(embeds=[e async for e in format_r34_images(r34posts)])
             
-        
-
-
-
-
-
-    
-
-    async def cog_check(self, ctx):
-        """Checks if the channel is nsfw"""
-        return ctx.channel.is_nsfw()
-
-
-    
+            
 def setup(bot):
     bot.add_cog(NsfwCog(bot))

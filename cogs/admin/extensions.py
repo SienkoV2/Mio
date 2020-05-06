@@ -42,7 +42,8 @@ class ExtensionLoadingCog(Cog, name='Admin'):
     
     def __init__(self, bot):
         self.bot = bot
-        self.bot.loop.create_task(self.extensions_load(None, None))
+        if len(bot.extensions) <= 1:
+            self.bot.loop.create_task(self.extensions_load(None, None))
         
     @group(name='extensions', aliases=['ext', '-e'], invoke_without_command=True)
     async def extensions_(self, ctx):
