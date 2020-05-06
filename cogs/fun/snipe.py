@@ -43,16 +43,16 @@ class SnipeCog(Cog, name='Fun'):
         await self.bot.wait_until_ready()   
         self.snipes = {g.id: {} for g in self.bot.guilds}  
 
-    @Cog.listener()
+    @Cog.listener('on_guild_join')
     async def on_guild_join(self, guild): 
         self.snipes[guild.id] = {}
         
-    @Cog.listener()
-    async def on_guild_remove(self, guild): 
+    @Cog.listener('on_guild_remove')
+    async def _snipe_rem(self, guild): 
         self.snipes.pop(guild.id)
         
-    @Cog.listener()
-    async def on_message_delete(self, msg: discord.Message):
+    @Cog.listener('on_message_delete')
+    async def _snipe_del(self, msg: discord.Message):
         """Main listener"""
         await self.bot.wait_until_ready()
         if not msg.author.bot and len(msg.content) <= 200:

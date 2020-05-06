@@ -27,12 +27,11 @@ __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
 from typing import Iterator
-from asyncio import sleep
 
 from discord.ext.commands import Cog, Group, command
 
-from utils.formatters import ColoredEmbed, random_color
-from config import BOOTUP_CHANNEL, GITHUB_LINK
+from utils.formatters import ColoredEmbed
+from config import GITHUB_LINK
 
 
 class BotInfoCog(Cog, name='Infos'):   
@@ -40,7 +39,6 @@ class BotInfoCog(Cog, name='Infos'):
          
     def __init__(self, bot):
         self.bot = bot 
-        self.bot.loop.create_task(self._fetch_github_embed())
     
     @command(name='source')
     async def source(self, ctx):
@@ -49,8 +47,8 @@ class BotInfoCog(Cog, name='Infos'):
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command in {ctx.channel.mention},' 
                          'hope that he gave a star')
-        self._embed.color = random_color()
-        await ctx.display(embed=self._embed)
+        
+        await ctx.display(content=GITHUB_LINK)
     
     @command(name='stats')
     async def stats(self, ctx):
@@ -82,15 +80,6 @@ class BotInfoCog(Cog, name='Infos'):
         for container in (self.bot.cogs, groups, self.bot.walk_commands()):
             yield sum(1 for _ in container)
                                 
-    async def _fetch_github_embed(self):
-        await self.bot.wait_until_ready()
-        channel = await self.bot.fetch_channel(BOOTUP_CHANNEL)
-        msg = await channel.send(GITHUB_LINK)
-        await sleep(2)
-        msg_with_embed = await channel.fetch_message(msg.id)
-        await msg.delete()  # it just reformats it in a nice way for some reason
-        self._embed = msg_with_embed.embeds[0]
-        
         
 def setup(bot):
     bot.add_cog(BotInfoCog(bot))

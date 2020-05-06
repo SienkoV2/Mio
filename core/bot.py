@@ -45,7 +45,7 @@ class MioBot(AutoShardedBot):
         super().__init__(*args, **kwargs)
         
         print('-' * 50)
-        self.session = AioClientSession()
+        self.session = AioClientSession(loop=self.loop)
         
         for attr in ('_command_cd', '_error_cd', '_clock_cd', '_warn_cd'):
             setattr(self, attr, CooldownMapping.from_cooldown(1, GLOBAL_USER_COOLDOWN, BucketType.member))
