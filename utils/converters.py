@@ -26,21 +26,55 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from discord import Object
-from discord.ext.commands import Converter, UserConverter, BadArgument
+from discord import NotFound
+from discord.ext.commands import Converter, UserConverter, BadArgument, MessageConverter
 
 
-class HackUser(Converter):
-    """Converts stuff to sort of user object"""
+class FetchedUser(Converter):
+    __slots__ = tuple()
+    
+    """Finds an user from name/id, fetches it if needed"""
     async def convert(self, ctx, arg):
         try:
-            user = await UserConverter().convert(ctx, arg)
+            return await UserConverter().convert(ctx, arg)
         except BadArgument:
             try:
                 id_ = int(arg)
             except ValueError:
                 raise BadArgument(f"Couldn't find an user named {arg}")
             else:
-                return Object(id_)        
-        else:
+                return await ctx.bot.fetch_user(id_)
+
+
+class AnyToUser(Converter):
+    __slots__ = tuple()
+    
+    """
+    Tries to find an user, includes msg ids too
+    Doesn't raise any error if it couldn't find it
+    """
+    async def convert(self, ctx, arg):
+        # tries to find from an user  
+        user = await self.from_user(ctx, arg)
+        if user is not None: 
             return user
+    
+        # tries to find from a message id 
+        message = await self.from_message(ctx, arg)
+        if message is not None: 
+            return message.author
+        
+        # out of ideas, raising no errors
+        return None
+        
+    async def from_user(self, ctx, arg):
+        try:
+            return await FetchedUser().convert(ctx, arg)
+        except NotFound:
+            return None
+        
+    async def from_message(self, ctx, arg):
+        try:
+            return await MessageConverter().convert(ctx, arg)
+        except BadArgument:
+            return None

@@ -26,6 +26,7 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
+
 from typing import Union, List
 
 import discord
@@ -44,11 +45,9 @@ class DoujinshiConverter(Converter):
         try:
             query = int(arg)
         except ValueError:
-            return await ctx.bot.loop.run_in_executor(None, self.from_string, 
-                                                      arg)
+            return await ctx.bot.loop.run_in_executor(None, self.from_string, arg)
         else:
-            return await ctx.bot.loop.run_in_executor(None, self.from_index, 
-                                                      query)
+            return await ctx.bot.loop.run_in_executor(None, self.from_index, query)
 
     def from_index(self, index: int):
         return [Doujinshi(index)]
@@ -57,10 +56,12 @@ class DoujinshiConverter(Converter):
         return [*n_search(query, 1)]
 
 
-# interfaces 
+class PaginatorDoujinReader(Paginator):
+    def __init__(self, **options):
+        super().__init__(**options)
+        self.original_embeds = self.embeds
+        self.doujins = options.pop('doujins')
 
-
-class BaseDoujinReader:        
     @button(emoji='📖', position=6)
     async def on_book(self, payload):
         self.embeds = [*self._format_doujins(self.doujins[self._index])]
@@ -77,55 +78,30 @@ class BaseDoujinReader:
             yield ColoredEmbed().set_image(url=image_url)
 
 
-class PaginatorDoujinReader(Paginator, BaseDoujinReader):
-    def __init__(self, **options):
-        super().__init__(**options)
-        self.original_embeds = self.embeds
-        self.doujins = options.pop('doujins')
-
-
-# the actual cog
-
-
-class NhentaiReaderCog(Cog, name='Nsfw'):
-    __slots__ = ('bot',)
-    
-    def __init__(self, bot):
-        self.bot = bot  
+async def format_nhentai_pages(self, results: List[Doujinshi]):
+    for doujin in results:            
+        embed = ColoredEmbed(title=f'{doujin.name} ({doujin.magic})',
+                             url=f'https://nhentai.net/g/{doujin.magic}')
         
-    @command(name='nhentai')
-    @is_nsfw()
-    async def nhentai_(self, ctx, query: DoujinshiConverter):
-        if not (pages:= [p async for p in self._format_pages(query)]):
-            return await ctx.display(embed=ColoredEmbed(title='No doujin found'))    
-        else:
-            await PaginatorDoujinReader(ctx=ctx, embeds=pages, doujins=query).run_until_complete()  
-       
-    async def _format_pages(self, results: List[Doujinshi]):
-        for doujin in results:            
-            embed = ColoredEmbed(title=f'{doujin.name} ({doujin.magic})',
-                                 url=f'https://nhentai.net/g/{doujin.magic}')
+        # Cover image
+        if (cover_url:= getattr(doujin, 'cover', None)):
+            embed.set_image(url=cover_url)
             
-            # Cover image
-            if (cover_url:= getattr(doujin, 'cover', None)):
-                embed.set_image(url=cover_url)
-                
-            # japanese name 
-            if (jname:= getattr(doujin, 'jname', None)):
-                embed.add_field(name='Japanese name', value=jname, 
-                                inline=False)
+        # japanese name 
+        if (jname:= getattr(doujin, 'jname', None)):
+            embed.add_field(name='Japanese name', value=jname, 
+                            inline=False)
 
-            # tags
-            if (tags:= getattr(doujin, 'tags', None)):                 
-                if [t for t in tags if t in {'loli', 'shota'}]:
-                    continue
-                
-                embed.add_field(name='Tags', 
-                                value=' | '.join((f"`{t}`" for t in tags)), 
-                                inline=False)
+        # tags
+        if (tags:= getattr(doujin, 'tags', None)):                 
+            if [t for t in tags if t in {'loli', 'shota'}]:
+                continue
+            
+            embed.add_field(name='Tags', 
+                            value=' | '.join((f"`{t}`" for t in tags)), 
+                            inline=False)
+        yield embed
+        
 
-            yield embed
-
-    
 def setup(bot):
-    bot.add_cog(NhentaiReaderCog(bot))
+    pass

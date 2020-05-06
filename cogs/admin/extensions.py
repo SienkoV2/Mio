@@ -91,9 +91,7 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         """
         Unloads all extensions matching the query 
         """        
-        exts = [e for e in self.bot.extensions 
-                if not {'jishaku', EXTENSION_LOADER_PATH.split('.')} & set(e.split('.')) 
-                and (query in e.split('.') + [None])]
+        exts = [e for e in self.bot.extensions if (query in e.split('.') + [None]) and e != 'jishaku']
         
         report = self._manage(self.bot.unload_extension, exts)
         
@@ -120,7 +118,6 @@ class ExtensionLoadingCog(Cog, name='Admin'):
         
     def _manage(self, func: Callable, iterable: Iterable) -> Iterable[Tuple[str, str]]:
         """Loads / reloads / unloads extensions"""        
-        report = []
         for ext in iterable:
             try:
                 func(ext)

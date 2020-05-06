@@ -40,11 +40,11 @@ class MioHelpCommand(MinimalHelpCommand):
             'cooldown': Cooldown(1, 15, BucketType.channel)})
         
     def get_command_signature(self, command):
-        return '{0.clean_prefix}{1.qualified_name} {1.signature}'.format(self, command)
+        return f'{self.clean_prefix}{command.qualified_name} {command.signature}'
         
     async def send_bot_help(self, mapping):
-        await self.context.display(embeds=[e async for e in self._format_bot_help(mapping)],
-                                   channel=self.get_destination())
+        embeds = [e async for e in self._format_bot_help(mapping)] or ColoredEmbed(title='No command found')
+        await self.context.display(embeds=embeds, channel=self.get_destination())
 
     async def send_cog_help(self, cog):
         filtered_commands = await self.filter_commands(cog.get_commands(), sort=True)
@@ -52,7 +52,8 @@ class MioHelpCommand(MinimalHelpCommand):
             return
         
         embeds = [e async for e in self._format_group_help(cog.qualified_name, filtered_commands)]
-        await self.context.display(embeds=embeds, channel=self.get_destination())
+        await self.context.display(embeds=embeds, 
+                                   channel=self.get_destination())
         
     async def send_group_help(self, group):
         filtered_commands = await self.filter_commands(group.commands, sort=True)
@@ -61,6 +62,11 @@ class MioHelpCommand(MinimalHelpCommand):
         
         embeds = [e async for e in self._format_group_help(group.qualified_name, filtered_commands)]
         await self.context.display(embeds=embeds, channel=self.get_destination())
+                    
+    async def send_command_help(self, command):
+        embed = ColoredEmbed(title=self.get_command_signature(command))
+        embed.add_field(name='Description', value=command.help)
+        await self.context.display(embed=embed, channel=self.get_destination())
                     
     async def _format_group_help(self, title, filtered_commands):
         """Formats the help provided for cogs and groups"""        
@@ -71,7 +77,6 @@ class MioHelpCommand(MinimalHelpCommand):
                 embed.add_field(name=self.get_command_signature(command), 
                                 value=command.short_doc, 
                                 inline=False)
-
             yield embed
 
     async def _format_bot_help(self, mapping):
@@ -97,7 +102,6 @@ class MioHelpCommand(MinimalHelpCommand):
                     embed.add_field(name=cog.qualified_name, 
                                     value=' | '.join(command_names), 
                                     inline=False)
-                
             yield embed
        
                 

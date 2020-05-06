@@ -44,7 +44,7 @@ class BotInfoCog(Cog, name='Infos'):
     
     @command(name='source')
     async def source(self, ctx):
-        """Show bot's source code"""
+        """Show the bot's source code"""
         await self.bot.wait_until_ready()
         owner = self.bot.get_user(self.bot.owner_id)
         await owner.send(f'{ctx.author} used the source command in {ctx.channel.mention},' 

@@ -95,7 +95,7 @@ class MioBot(AutoShardedBot):
         is_owner = await ctx.is_owner()
         e_args = (type(error), error, error.__traceback__, 4)  
         
-        if not isinstance(error, (HTTPException, ClientException)):
+        if not isinstance(error, (HTTPException, ClientException, CommandOnCooldown)):
             print_exception(*e_args)
                 
         # Cooldown bypass 

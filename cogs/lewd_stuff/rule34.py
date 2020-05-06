@@ -26,11 +26,4 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from logging import basicConfig, WARNING
-
-from core import MioBot
-from config import DISCORD_TOKEN, DEFAULT_PARAMETERS
-
-if __name__ == '__main__':    
-    basicConfig(level=WARNING)
-    MioBot(**DEFAULT_PARAMETERS).run(DISCORD_TOKEN)
+import rule34

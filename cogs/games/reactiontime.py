@@ -26,16 +26,17 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-from time import perf_counter
+from asyncio import sleep as async_sleep
+from asyncio import TimeoutError as AsyncTimeoutError
 
 from random import randint
 from random import choice as rng_choice
 
-from asyncio import sleep as async_sleep
-from asyncio import TimeoutError as AsyncTimeoutError
+from time import perf_counter
 
 from discord import Emoji, Message
-from discord.ext.commands import command, Cog, max_concurrency, BucketType, CommandError
+from discord.ext.commands import (BucketType, Cog, CommandError, command,
+                                  max_concurrency)
 
 from utils.formatters import ColoredEmbed
 

@@ -26,37 +26,25 @@ __author__ = 'Saphielle-Akiyama'
 __license__ = 'MIT'
 __copyright__ = 'Copyright 2020 Saphielle-Akiyama'
 
-import discord
-from discord.ext import commands
-
-from utils.converters import HackUser
+from discord.ext.commands import Cog, command, is_nsfw
+from cogs.lewd_stuff.doujins import format_nhentai_pages, ColoredEmbed, PaginatorDoujinReader
 
 
-class MemberModerationCog(commands.Cog, name='Moderation'):
+class NsfwCog(Cog, name='Nsfw'):
+    
     def __init__(self, bot):
-        self.bot = bot
+        self.bot = bot  
         
-    @commands.command(name='kick')
-    @commands.has_guild_permissions(kick_members=True)
-    @commands.bot_has_permissions(kick_members=True)
-    async def kick(self, ctx, member: discord.Member, reason: str = None):
-        """Kicks a single member"""
-        await member.kick(reason=reason)
-        
-    @commands.command(name='ban')
-    @commands.has_guild_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    async def ban(self, ctx, user: HackUser, reason: str = None, delete_message_days: int = 1):
-        """Bans a single member"""
-        await ctx.guild.ban(user, reason=reason, delete_message_days=delete_message_days)
-            
-    @commands.command(name='unban')
-    @commands.has_guild_permissions(ban_members=True)
-    @commands.bot_has_permissions(ban_members=True)
-    async def unban(self, ctx, user: HackUser, reason: str = None):
-        """Unbans a single member"""
-        await ctx.guild.ban(user, reason=reason)
-            
-            
+    @command(name='nhentai')
+    @is_nsfw()
+    async def nhentai_(self, ctx, query: DoujinshiConverter):
+        if not (pages:= [p async for p in format_nhentai_pages(query)]):
+            return await ctx.display(embed=ColoredEmbed(title='No doujin found'))    
+        else:
+            await PaginatorDoujinReader(ctx=ctx, embeds=pages, doujins=query).run_until_complete()  
+       
+
+
+    
 def setup(bot):
-    bot.add_cog(MemberModerationCog(bot))
+    bot.add_cog(NsfwCog(bot))

@@ -44,7 +44,7 @@ def random_color():
     return Color.from_hsv(random(), uniform(0.75, 0.95), 1)
 
 
-def chunker(to_chunk: list, chunk_size: int = 4):
+def chunker(to_chunk: list, chunk_size: int = 5):
     """Yield successive n-sized chunks from lst."""
     for i in range(0, len(to_chunk), chunk_size):
         yield to_chunk[i:i + chunk_size]
