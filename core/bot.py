@@ -63,18 +63,13 @@ class MioBot(AutoShardedBot):
         self.dispatch('command', ctx)
         try:            
             command_bucket = self._command_cd.get_bucket(ctx.message)
-    
             if command_bucket.update_rate_limit() and not await ctx.is_owner():
                 return self.dispatch('global_cooldown', ctx, '_clock_cd', '⏰')
-            
             await ctx.command.invoke(ctx)
                 
         except CommandError as exc:
-            
             command_bucket.reset()    
-            
             self._clock_cd.get_bucket(ctx.message).reset()
-            
             await ctx.command.dispatch_error(ctx, exc)
             
         else:
@@ -122,4 +117,3 @@ class MioBot(AutoShardedBot):
             await task.cancel()
         self.session.close()
         return super().close()
-    

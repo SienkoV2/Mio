@@ -53,8 +53,8 @@ class BotInfoCog(Cog, name='Infos'):
     @command(name='stats')
     async def stats(self, ctx):
         """Shows some stats about the bot"""
-        guilds, channels, members = [*self._members_stats()]
-        cogs, groups, commands = [*self._bot_stats()]
+        guilds, channels, members = [s async for s in self._members_stats()]
+        cogs, groups, commands = [s async for s in self._bot_stats()]
         embed = ColoredEmbed(title='Stats')
 
         fields = [('Guilds', f'{guilds} guilds'), 
@@ -69,12 +69,12 @@ class BotInfoCog(Cog, name='Infos'):
         
         await ctx.display(embed=embed)    
     
-    def _members_stats(self) -> Iterator[int]:
+    async def _members_stats(self) -> Iterator[int]:
         """Async iterators good"""
         for container in (self.bot.guilds, self.bot.get_all_channels(), self.bot.get_all_members()):
             yield sum(1 for _ in container)
         
-    def _bot_stats(self):
+    async def _bot_stats(self):
         """Async iterators good"""        
         groups = (c for c in self.bot.walk_commands() if isinstance(c, Group))
         for container in (self.bot.cogs, groups, self.bot.walk_commands()):
